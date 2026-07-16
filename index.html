@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ficha Pododepor">
+<meta name="theme-color" content="#0F2744">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Ficha Exploración Biomecánica · Pododepor 2026</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230F2744'/%3E%3Ctext x='32' y='42' font-size='28' font-weight='bold' font-family='Helvetica' text-anchor='middle' fill='%23C8A84B'%3EPD%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+  :root {
+    --navy: #0F2744; --blue: #1E4D8C; --blue-mid: #2B6CB0;
+    --sky: #BEE3F8; --sky-light: #EBF8FF; --cream: #FEFCF7;
+    --cream-dark: #F0EAD6; --gold: #C8A84B; --text: #1A202C;
+    --text-mid: #4A5568; --text-light: #718096; --border: #CBD5E0;
+    --ok: #276749; --ok-bg: #F0FFF4; --warn: #744210;
+    --warn-bg: #FFFFF0; --danger: #742A2A; --danger-bg: #FFF5F5;
+    --radius: 10px; --shadow: 0 2px 8px rgba(15,39,68,0.10);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 16px; }
+  body { background: var(--cream-dark); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif; color: var(--text); min-height: 100vh; padding-bottom: calc(150px + var(--safe-b)); }
+
+  header { background: var(--navy); padding: 12px 16px 10px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 12px rgba(0,0,0,0.3); gap: 10px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
+  .header-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .header-logo { width: 36px; height: 36px; border-radius: 8px; background: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: var(--navy); letter-spacing: -0.5px; flex-shrink: 0; }
+  .header-title { color: white; min-width: 0; }
+  .header-title h1 { font-size: 15px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-title p { font-size: 11px; color: var(--sky); margin-top: 1px; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .btn-copy { background: var(--gold); color: var(--navy); border: none; padding: 11px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: transform 0.1s, opacity 0.1s; -webkit-user-select: none; min-height: 44px; white-space: nowrap; }
+  .btn-copy:active { transform: scale(0.96); opacity: 0.85; }
+  .btn-ghost-h { background: rgba(255,255,255,0.10); color: white; border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; min-width: 44px; min-height: 44px; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .btn-ghost-h:active { background: rgba(255,255,255,0.22); }
+
+  .progress-bar { height: 4px; background: rgba(15,39,68,0.15); position: sticky; top: calc(60px + env(safe-area-inset-top, 0px)); z-index: 99; }
+  .progress-fill { height: 100%; background: var(--gold); transition: width 0.4s; width: 0%; }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 14px 12px; }
+
+  /* BARRA DE ESTADO / AUTOGUARDADO */
+  .statusbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 12px; margin-bottom: 12px; box-shadow: var(--shadow); flex-wrap: wrap; }
+  .status-left { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-mid); min-width: 0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex-shrink: 0; }
+  .dot.saving { background: var(--gold); animation: pulse 0.8s infinite; }
+  .dot.off { background: var(--text-light); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .status-pct { font-size: 12px; font-weight: 700; color: var(--navy); background: var(--sky-light); border: 1px solid var(--sky); padding: 3px 9px; border-radius: 20px; }
+
+  .section { background: white; border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; box-shadow: var(--shadow); scroll-margin-top: 80px; }
+  .section.hidden-profile { display: none; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 16px; cursor: pointer; border-bottom: 2px solid transparent; transition: background 0.15s; -webkit-user-select: none; gap: 10px; }
+  .section-header:active { background: var(--sky-light); }
+  .section-header.open { border-bottom-color: var(--sky); }
+  .section-num { width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; transition: background 0.2s; }
+  .section-num.has-data { background: var(--ok); }
+  .section-label { flex: 1; min-width: 0; }
+  .section-label h2 { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .section-label p { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+  .section-count { font-size: 11px; font-weight: 700; color: var(--text-light); background: #EDF2F7; border-radius: 20px; padding: 3px 8px; flex-shrink: 0; }
+  .section-count.has-data { background: var(--ok-bg); color: var(--ok); }
+  .section-chevron { color: var(--text-light); font-size: 20px; transition: transform 0.25s; flex-shrink: 0; }
+  .section-header.open .section-chevron { transform: rotate(180deg); }
+  .section-body { display: none; padding: 16px 16px 20px; border-top: 1px solid var(--border); }
+  .section-body.open { display: block; }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 700; color: var(--text-mid); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .field label .req { color: #E53E3E; }
+  select, input[type="text"], input[type="date"], input[type="number"], textarea { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--radius); font-size: 16px; color: var(--text); background: white; appearance: none; -webkit-appearance: none; font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s; min-height: 46px; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234A5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+  select:focus, input:focus, textarea:focus { outline: none; border-color: var(--blue-mid); box-shadow: 0 0 0 3px rgba(43,108,176,0.15); }
+  select.touched, input.touched, textarea.touched { border-color: var(--blue-mid); background: #FAFDFF; }
+  select.invalid, input.invalid { border-color: #E53E3E; box-shadow: 0 0 0 3px rgba(229,62,62,0.12); }
+  textarea { min-height: 78px; resize: vertical; line-height: 1.5; }
+
+  .grid-di { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid-di-label { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+  .grid-di-label span { font-size: 12px; font-weight: 700; text-align: center; padding: 4px 8px; border-radius: 6px; }
+  .lbl-d { background: #EBF4FF; color: #1A56DB; }
+  .lbl-i { background: #FFF3E6; color: #C05621; }
+  /* minmax(0,1fr): sin él, el input[type=date] impone su ancho mínimo y desborda la pantalla */
+  .grid-3 { display: grid; grid-template-columns: 2fr minmax(0,1fr) minmax(0,1fr); gap: 10px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+
+  .subsection { margin-bottom: 20px; }
+  .subsection h3 { font-size: 12px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1.5px solid var(--sky); }
+
+  /* FPI */
+  .fpi-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+  .fpi-table thead th { background: var(--navy); color: white; padding: 10px 8px; font-size: 12px; font-weight: 600; text-align: center; }
+  .fpi-table thead th:first-child { text-align: left; border-radius: 8px 0 0 0; }
+  .fpi-table thead th:last-child { border-radius: 0 8px 0 0; }
+  .fpi-table tbody tr { border-bottom: 1px solid var(--border); }
+  .fpi-table tbody tr:last-child { border-bottom: none; }
+  .fpi-table td { padding: 8px 4px; vertical-align: middle; }
+  .fpi-table td:first-child { font-size: 12px; color: var(--text); padding-left: 6px; line-height: 1.3; }
+  .fpi-table td select { padding: 10px 6px; font-size: 13px; min-height: 46px; background-position: right 8px center; padding-right: 24px; }
+  .fpi-total-row { background: var(--navy) !important; }
+  .fpi-total-row td { color: white; font-weight: 700; font-size: 15px; text-align: center; padding: 12px 6px; }
+  .fpi-total-row td:first-child { color: white; text-align: left; padding-left: 10px; }
+  .fpi-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-top: 8px; }
+  .fpi-normal { background: var(--ok-bg); color: var(--ok); }
+  .fpi-pronado { background: #FFF5F5; color: #C53030; }
+  .fpi-supinado { background: #EBF4FF; color: #2B6CB0; }
+  .fpi-muy { background: #FFF5F5; color: #742A2A; }
+  .fpi-result { display: flex; gap: 12px; margin-top: 10px; }
+  .fpi-result-box { flex: 1; text-align: center; padding: 12px 8px; background: var(--sky-light); border-radius: var(--radius); border: 1px solid var(--sky); }
+  .fpi-result-box .val { font-size: 30px; font-weight: 800; color: var(--navy); line-height: 1.1; }
+  .fpi-result-box .side { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); }
+  .fpi-incompleto { font-size: 11px; color: var(--warn); background: var(--warn-bg); border: 1px solid #F6E05E; padding: 6px 10px; border-radius: 8px; margin-top: 8px; display: none; }
+  .fpi-incompleto.show { display: block; }
+
+  /* MUSCULAR / ARTICULAR */
+  .muscle-grid, .joint-grid { display: grid; gap: 6px; }
+  .muscle-row, .joint-row { display: grid; grid-template-columns: 1fr 88px 88px; gap: 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); }
+  .muscle-row:last-child, .joint-row:last-child { border-bottom: none; }
+  .muscle-name, .joint-name { font-size: 13px; color: var(--text); line-height: 1.3; }
+  .muscle-row select, .joint-row select { padding: 10px 4px; font-size: 13px; min-height: 46px; background-position: right 6px center; padding-right: 20px; text-align: center; }
+  .col-header { display: grid; grid-template-columns: 1fr 88px 88px; gap: 8px; margin-bottom: 6px; }
+  .col-header span { font-size: 12px; font-weight: 700; text-align: center; padding: 4px; border-radius: 6px; }
+  select.flag-low { border-color: #E53E3E; background: var(--danger-bg); color: var(--danger); font-weight: 700; }
+
+  /* ROCKER / CARRERA */
+  .rocker-block, .carrera-block { margin-bottom: 16px; border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .rocker-header, .carrera-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-weight: 700; font-size: 13px; color: white; }
+  .rocker-1 { background: #1E4D8C; } .rocker-2 { background: #2B7A3D; }
+  .rocker-3 { background: #B7791F; } .rocker-vuelo { background: #553C9A; }
+  .carrera-sagital { background: #1a5276; } .carrera-frontal { background: #1e8449; }
+  .rocker-body, .carrera-body { padding: 10px 12px 14px; }
+  .rocker-row, .carrera-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .rocker-row:last-child { margin-bottom: 0; }
+  .rocker-param, .carrera-param { font-size: 12px; color: var(--text); line-height: 1.25; }
+  .rocker-row select, .carrera-row select { padding: 9px 4px; font-size: 12px; min-height: 46px; background-position: right 6px center; padding-right: 20px; }
+  select.alterado { border-color: var(--gold); background: #FFFCF0; font-weight: 600; }
+  .rocker-obs { margin-top: 8px; }
+  .rocker-obs textarea { min-height: 52px; font-size: 14px; }
+  .rocker-col-header { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 6px; padding: 0 0 4px; border-bottom: 1px solid var(--border); }
+  .rocker-col-header span { font-size: 11px; font-weight: 700; text-align: center; color: var(--text-light); text-transform: uppercase; }
+  .carrera-fase-title { font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 0.4px; margin: 12px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--sky); }
+  .carrera-fase-title:first-child { margin-top: 0; }
+  .tecnica-row { display: grid; grid-template-columns: 140px 1fr; gap: 10px; align-items: center; padding: 4px 0; }
+
+  /* DISMETRÍA */
+  .dismetria-block { background: var(--sky-light); border: 1.5px solid var(--sky); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
+  .dismetria-block h4 { font-size: 12px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px; }
+  .dismetria-row { display: grid; grid-template-columns: 1fr 100px; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .dismetria-sep { text-align: center; font-size: 12px; color: var(--text-light); font-style: italic; padding: 6px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); margin: 8px 0; }
+  .dismetria-out { font-size: 12px; font-weight: 700; color: var(--navy); background: white; border: 1px solid var(--sky); border-radius: 8px; padding: 8px 10px; margin-top: 8px; display: none; }
+  .dismetria-out.show { display: block; }
+
+  .np-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .chk-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .chk { display: flex; align-items: center; gap: 7px; font-size: 14px; background: var(--sky-light); border: 1.5px solid var(--sky); padding: 10px 13px; border-radius: 8px; cursor: pointer; text-transform: none; font-weight: 500; min-height: 44px; }
+  .chk input { width: auto; min-height: auto; border: none; padding: 0; width: 18px; height: 18px; accent-color: var(--blue-mid); }
+  .chk.on { background: #E6FFFA; border-color: var(--ok); color: var(--ok); font-weight: 700; }
+
+  .nota { background: var(--sky-light); border-left: 3px solid var(--blue-mid); padding: 10px 12px; border-radius: 0 var(--radius) var(--radius) 0; font-size: 12px; color: var(--text-mid); margin-bottom: 16px; line-height: 1.5; }
+  .nota.warn { background: var(--warn-bg); border-left-color: var(--gold); }
+
+  /* ACCIONES INFERIORES */
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+  .btn { border-radius: var(--radius); padding: 14px 12px; font-size: 14px; font-weight: 700; cursor: pointer; min-height: 50px; display: flex; align-items: center; justify-content: center; gap: 7px; font-family: inherit; border: 1.5px solid var(--border); background: white; color: var(--text-mid); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--navy); border-color: var(--navy); color: white; }
+  .btn-gold { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+  .btn-wide { grid-column: 1 / -1; }
+  .btn-danger { color: var(--danger); border-color: #FEB2B2; background: var(--danger-bg); }
+
+  /* TOAST / FAB */
+  .toast { position: fixed; bottom: calc(84px + var(--safe-b)); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ok); color: white; padding: 12px 22px; border-radius: 30px; font-size: 14px; font-weight: 600; opacity: 0; transition: all 0.3s; z-index: 999; max-width: 90vw; text-align: center; pointer-events: none; box-shadow: 0 4px 18px rgba(0,0,0,0.25); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.err { background: #C53030; }
+  .toast.info { background: var(--navy); }
+
+  .fab-wrap { position: fixed; bottom: calc(20px + var(--safe-b)); right: 16px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
+  .fab { background: var(--navy); color: white; width: 54px; height: 54px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; box-shadow: 0 4px 16px rgba(15,39,68,0.35); display: flex; align-items: center; justify-content: center; }
+  .fab.gold { background: var(--gold); color: var(--navy); }
+  .fab:active { transform: scale(0.94); }
+  .fab.small { width: 44px; height: 44px; font-size: 17px; background: white; color: var(--navy); border: 1px solid var(--border); }
+
+  /* MODAL */
+  .modal { position: fixed; inset: 0; background: rgba(15,39,68,0.55); z-index: 500; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(2px); }
+  .modal.show { display: flex; }
+  .modal-card { background: var(--cream); width: 100%; max-width: 640px; max-height: 88vh; border-radius: 16px 16px 0 0; display: flex; flex-direction: column; overflow: hidden; animation: slideup 0.22s ease-out; }
+  @media (min-width: 700px) { .modal { align-items: center; } .modal-card { border-radius: 16px; max-height: 82vh; } }
+  @keyframes slideup { from { transform: translateY(30px); opacity: 0.4; } to { transform: translateY(0); opacity: 1; } }
+  .modal-head { background: var(--navy); color: white; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-shrink: 0; }
+  .modal-head h3 { font-size: 15px; font-weight: 700; }
+  .modal-head p { font-size: 11px; color: var(--sky); margin-top: 2px; }
+  .modal-close { background: rgba(255,255,255,0.12); border: none; color: white; width: 34px; height: 34px; border-radius: 50%; font-size: 18px; cursor: pointer; flex-shrink: 0; }
+  .modal-body { padding: 14px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .modal-foot { padding: 12px 14px calc(12px + var(--safe-b)); border-top: 1px solid var(--border); background: white; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-shrink: 0; }
+  .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .search-row input { flex: 1; }
+
+  .hist-item { background: white; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 12px 13px; margin-bottom: 9px; display: flex; align-items: center; gap: 11px; }
+  .hist-avatar { width: 44px; height: 44px; border-radius: 10px; background: var(--sky-light); border: 1px solid var(--sky); color: var(--blue); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; letter-spacing: -0.3px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .hist-info { flex: 1; min-width: 0; }
+  .hist-info .h1l { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .hist-info .h2l { font-size: 11px; color: var(--text-light); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hist-tags { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+  .tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; background: #EDF2F7; color: var(--text-mid); }
+  .tag.gold { background: #FFFCF0; color: var(--warn); border: 1px solid #F6E05E; }
+  .tag.ok { background: var(--ok-bg); color: var(--ok); }
+  .hist-btns { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+  .hist-btn { border: 1px solid var(--border); background: white; border-radius: 8px; padding: 7px 9px; font-size: 11px; font-weight: 700; cursor: pointer; min-width: 62px; color: var(--text-mid); }
+  .hist-btn.load { background: var(--navy); border-color: var(--navy); color: white; }
+  .hist-btn.del { color: var(--danger); border-color: #FEB2B2; }
+  .empty { text-align: center; padding: 34px 16px; color: var(--text-light); font-size: 13px; line-height: 1.6; }
+  .empty .big { font-size: 34px; margin-bottom: 8px; }
+
+  .preview { background: var(--navy); color: #E2E8F0; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; line-height: 1.55; padding: 12px; border-radius: var(--radius); white-space: pre-wrap; word-break: break-word; max-height: 60vh; overflow-y: auto; }
+
+  /* PANTALLA DE BLOQUEO — opaca: tapa por completo los datos del paciente en pantalla */
+  .lock { position: fixed; inset: 0; background: var(--navy); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
+  .lock.hidden { display: none; }
+  .lock-card { width: 100%; max-width: 380px; text-align: center; color: white; }
+  .lock-logo { width: 64px; height: 64px; border-radius: 16px; background: var(--gold); color: var(--navy); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; margin: 0 auto 18px; }
+  .lock-card h2 { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+  .lock-card p.sub { font-size: 13px; color: var(--sky); opacity: 0.9; line-height: 1.55; margin-bottom: 20px; }
+  .lock-card input { text-align: center; font-size: 17px; letter-spacing: 1px; margin-bottom: 10px; }
+  .lock-btn { width: 100%; background: var(--gold); color: var(--navy); border: none; border-radius: var(--radius); padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; min-height: 52px; font-family: inherit; margin-top: 4px; }
+  .lock-btn:active { transform: scale(0.98); }
+  .lock-btn.sec { background: transparent; color: var(--sky); border: 1.5px solid rgba(255,255,255,0.3); margin-top: 10px; }
+  .lock-err { background: rgba(197,48,48,0.25); border: 1px solid #FC8181; color: #FED7D7; font-size: 13px; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; display: none; text-align: left; line-height: 1.5; }
+  .lock-err.show { display: block; }
+  .lock-aviso { background: rgba(200,168,75,0.15); border: 1px solid var(--gold); color: #F6E8C3; font-size: 12px; padding: 11px 13px; border-radius: 8px; margin-bottom: 16px; text-align: left; line-height: 1.55; }
+  .lock-pie { font-size: 11px; color: var(--sky); opacity: 0.6; margin-top: 18px; line-height: 1.5; }
+  .lock-fuerza { height: 4px; border-radius: 4px; background: rgba(255,255,255,0.15); margin: 0 0 12px; overflow: hidden; }
+  .lock-fuerza i { display: block; height: 100%; width: 0%; background: #FC8181; transition: width 0.3s, background 0.3s; }
+
+  @media (max-width: 560px) {
+    /* En el móvil de consulta, 4 columnas no caben: peso/talla y fecha/asintomático se apilan en 2x2. */
+    .grid-4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+  @media (max-width: 480px) {
+    .muscle-row, .joint-row, .col-header { grid-template-columns: 1fr 74px 74px; }
+    .np-grid { grid-template-columns: 1fr; }
+    .tecnica-row { grid-template-columns: 1fr; }
+    .header-title h1 { font-size: 13px; }
+    .btn-copy { padding: 11px 13px; font-size: 12px; }
+    .fpi-table td:first-child { font-size: 11px; }
+  }
+  @media print { header, .fab-wrap, .actions, .statusbar, .modal { display: none !important; } .section-body { display: block !important; } }
+</style>
+</head>
+<body>
+
+<!-- Se muestra tapando todo hasta que se introduce la contraseña correcta -->
+<div class="lock" id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-logo">PD</div>
+    <h2 id="lockTitulo">Ficha Pododepor</h2>
+    <p class="sub" id="lockSub">Introduce tu contraseña para abrir el historial.</p>
+
+    <div class="lock-err" id="lockErr"></div>
+    <div class="lock-aviso" id="lockAviso" style="display:none;"></div>
+
+    <form id="lockForm" onsubmit="return false;" autocomplete="off">
+      <input type="password" id="lockPass" placeholder="Contraseña" autocomplete="current-password" enterkeyhint="go">
+      <div class="lock-fuerza" id="lockFuerzaBar" style="display:none;"><i id="lockFuerza"></i></div>
+      <input type="password" id="lockPass2" placeholder="Repite la contraseña" autocomplete="new-password" style="display:none;" enterkeyhint="go">
+      <button class="lock-btn" id="lockBtn" type="submit">Abrir</button>
+    </form>
+
+    <p class="lock-pie" id="lockPie">Los datos se guardan cifrados en este dispositivo.</p>
+  </div>
+</div>
+
+<header>
+  <div class="header-brand">
+    <div class="header-logo">PD</div>
+    <div class="header-title">
+      <h1>Ficha Exploración Biomecánica</h1>
+      <p id="hdrSub">Pododepor · Emilio Gago · 2026</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-ghost-h" onclick="abrirHistorial()" title="Historial de fichas">🗂</button>
+    <button class="btn-copy" onclick="copiarParaClaude()">📋 Copiar</button>
+  </div>
+</header>
+
+<div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+<div class="toast" id="toast">✓ Copiado</div>
+
+<div class="container">
+
+  <div class="statusbar">
+    <div class="status-left">
+      <span class="dot" id="saveDot"></span>
+      <span id="saveTxt">Borrador nuevo</span>
+    </div>
+    <span class="status-pct" id="statusPct">0% completado</span>
+  </div>
+
+  <!-- SECCIÓN 1: PACIENTE -->
+  <div class="section" id="sec1">
+    <div class="section-header open" onclick="toggleSection(this)">
+      <div class="section-num">1</div>
+      <div class="section-label"><h2>Paciente</h2><p>Datos personales y motivo de consulta</p></div>
+      <span class="section-count">0</span>
+      <span class="section-chevron">⌄</span>
+    </div>
+    <div class="section-body open">
+      <div class="grid-di">
+        <div class="field"><label>Etapa vital</label><select id="p_etapa" onchange="aplicarPerfil()"><option value="adulto">Adulto</option><option value="nino">Niño</option><option value="mayor">Mayor</option></select></div>
+        <div class="field"><label>Perfil de actividad</label><select id="p_actividad" onchange="aplicarPerfil()"><option value="no_dep">No deportista</option><option value="dep_gen">Deportista general</option><option value="corredor">Corredor</option></select></div>
+      </div>
+      <div class="grid-3">
+        <div class="field"><label>Nº historia clínica <span class="req">*</span></label><input type="text" id="p_historia" placeholder="Ej. 04821" maxlength="20" autocomplete="off"></div>
+        <div class="field"><label>Edad</label><input type="number" id="p_edad" placeholder="Años" min="1" max="110" inputmode="numeric"></div>
+        <div class="field"><label>Sexo</label><select id="p_sexo"><option value="">–</option><option>Hombre</option><option>Mujer</option><option>Otro / no consta</option></select></div>
+      </div>
+      <div class="grid-4">
+        <div class="field"><label>Peso (kg)</label><input type="number" id="p_peso" placeholder="70" min="10" max="250" inputmode="decimal" step="0.1"></div>
+        <div class="field"><label>Talla (cm)</label><input type="number" id="p_talla" placeholder="175" min="60" max="230" inputmode="numeric"></div>
+        <div class="field"><label>Fecha <span class="req">*</span></label><input type="date" id="p_fecha"></div>
+        <div class="field"><label>¿Asintomático?</label><select id="p_asint"><option value="">–</option><option value="Sí">Sí</option><option value="No">No</option></select></div>
+      </div>
+      <div class="field" id="imc_box" style="display:none;">
+        <div class="nota" style="margin-bottom:0;">IMC calculado: <strong id="imc_val">–</strong> <span id="imc_cat" style="color:var(--text-light);"></span></div>
+      </div>
+      <div class="field"><label>Zona y descripción del dolor (si hay)</label><input type="text" id="p_dolor" placeholder="Ej. dolor talón derecho de 3 meses, punzante en primer apoyo"></div>
+      <div class="field"><label>Actividad / Deporte</label><input type="text" id="p_deporte" placeholder="Ej. running 40 km/sem, trail, asfalto, 3 años"></div>
+      <div class="field"><label>Objetivo de consulta</label><input type="text" id="p_objetivo" placeholder="Ej. estudio biomecánico + orientación ortética"></div>
+      <div class="field" id="compite_field"><label>¿Compite? Marcas / tiempos</label><input type="text" id="p_compite" placeholder="Ej. sí, maratón 3h45 · media 1h45"></div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 2: ANTECEDENTES -->
+  <div class="section" id="sec2">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">2</div>
+      <div class="section-label"><h2>Antecedentes</h2><p>Clínicos, quirúrgicos, podológicos</p></div>
+      <span class="section-count">0</span>
+      <span class="section-chevron">⌄</span>
+    </div>
+    <div class="section-body">
+      <div class="field"><label>Familiares relevantes</label><input type="text" id="a_familiares" placeholder="Ej. madre con fascitis plantar"></div>
+      <div class="field"><label>Personales / médicos</label><input type="text" id="a_personales" placeholder="Ej. HTA controlada, sin alergias, sin medicación relevante"></div>
+      <div class="field"><label>Quirúrgicos <span style="color:var(--blue-mid);font-size:11px;">(CLAVE · especificar lado)</span></label><input type="text" id="a_quirurgicos" placeholder="Ej. artrorrisis subastragalina derecha (2019)"></div>
+      <div class="field"><label>Lesiones deportivas</label><input type="text" id="a_lesiones" placeholder="Ej. esguince tobillo derecho (2022), resuelto"></div>
+      <div class="field"><label>Podológicos previos</label><input type="text" id="a_podologicos" placeholder="Ej. plantillas ortopédicas hace 5 años, sin seguimiento"></div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 3: CALZADO -->
+  <div class="section" id="sec3">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">3</div>
+      <div class="section-label"><h2>Calzado</h2><p>Adaptado al perfil de actividad</p></div>
+      <span class="section-count">0</span>
+      <span class="section-chevron">⌄</span>
+    </div>
+    <div class="section-body">
+      <div id="calz_diario_block">
+        <div class="field"><label>Calzado de calle / diario</label><input type="text" id="c_diario" placeholder="Ej. zapato con cordones, suela plana, buen contrafuerte"></div>
+        <div class="field"><label>Calzado de trabajo</label><input type="text" id="c_trabajo" placeholder="Ej. bota de seguridad 8h/día, o calzado sanitario tipo zueco"></div>
+      </div>
+      <div id="calz_deportivo_block">
+        <div class="field"><label>Calzado de rodaje / entrenamiento</label><input type="text" id="c_rodaje" placeholder="Ej. Asics Nimbus 28, 600 km, talla 44"></div>
+        <div class="field"><label>Calzado calidad / series</label><input type="text" id="c_series" placeholder="Ej. Adidas Adizero EVO SL"></div>
+      </div>
+      <div id="calz_placa_block">
+        <div class="field"><label>Competición / placa</label><input type="text" id="c_comp" placeholder="Ej. Nike Vaporfly 4"></div>
+      </div>
+      <div class="field"><label>Estado / desgaste</label><select id="c_desgaste"><option value="">–</option><option>Bueno</option><option>Desgaste lateral</option><option>Desgaste medial</option><option>Desgaste talón</option><option>Desgaste uniforme</option><option>Desgaste mixto</option><option>Muy gastado</option></select></div>
+      <div class="field"><label>Plantillas actuales</label><select id="c_plantillas"><option value="">–</option><option>Sin plantillas</option><option>Plantillas de serie (fabricante)</option><option>Plantillas semirígidas comerciales</option><option>Plantillas ortopédicas a medida propias</option><option>Plantillas ortopédicas a medida de otro</option></select></div>
+      <div class="field"><label>Antigüedad / respuesta a las plantillas actuales</label><input type="text" id="c_plant_notas" placeholder="Ej. 4 años, mejoría parcial del dolor los 6 primeros meses"></div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 4: CAMILLA -->
+  <div class="section" id="sec4">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">4</div>
+      <div class="section-label"><h2>Exploración en camilla</h2><p>Decúbito supino · Solo alterados</p></div>
+      <span class="section-count">0</span>
+      <span class="section-chevron">⌄</span>
+    </div>
+    <div class="section-body">
+      <div class="nota">Solo completa lo <strong>alterado</strong>. Todo lo que dejes en "–" se agrupará automáticamente como sin alteraciones relevantes.</div>
+
+      <div class="subsection">
+        <h3>Inspección en camilla</h3>
+        <div class="field"><label>HQP – Hiperqueratosis plantar (localización)</label><input type="text" id="cam_hqp" placeholder="Ej. central M2-M3 bilateral, pulpejo D1 derecho"></div>
+        <div class="field"><label>HAV – Hallux Abductus Valgus</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="cam_hav_d"><option value="">–</option><option>Ausente</option><option>Leve (&lt; 20°)</option><option>Moderado (20-40°)</option><option>Severo (&gt; 40°)</option></select>
+            <select id="cam_hav_i"><option value="">–</option><option>Ausente</option><option>Leve (&lt; 20°)</option><option>Moderado (20-40°)</option><option>Severo (&gt; 40°)</option></select>
+          </div>
+        </div>
+        <div class="field"><label>DORS M1 – Movilidad primer radio</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="cam_dors_d"><option value="">–</option><option>Normal</option><option>Dorsiflexión disminuida</option><option>Dorsiflexión aumentada</option><option>Plantarflexión disminuida</option><option>Elevado (plantarflexionado)</option><option>Rígido / bloqueado</option></select>
+            <select id="cam_dors_i"><option value="">–</option><option>Normal</option><option>Dorsiflexión disminuida</option><option>Dorsiflexión aumentada</option><option>Plantarflexión disminuida</option><option>Elevado (plantarflexionado)</option><option>Rígido / bloqueado</option></select>
+          </div>
+        </div>
+        <div class="field"><label>HLF – Hallux Limitus Funcional</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="cam_hlf_d"><option value="">–</option><option>Ausente</option><option>Presente leve</option><option>Presente moderado</option><option>Presente severo (HL estructural)</option></select>
+            <select id="cam_hlf_i"><option value="">–</option><option>Ausente</option><option>Presente leve</option><option>Presente moderado</option><option>Presente severo (HL estructural)</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Relación antepié-retropié (Root)</h3>
+        <div class="field">
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="cam_apia_d"><option value="">–</option><option>Neutro</option><option>Antepié varo estructural leve</option><option>Antepié varo estructural moderado</option><option>Antepié varo estructural severo</option><option>Antepié varo pronado (músculo-ligamentoso)</option><option>Antepié valgo estructural</option><option>Antepié valgo supinado (músculo-ligamentoso)</option></select>
+            <select id="cam_apia_i"><option value="">–</option><option>Neutro</option><option>Antepié varo estructural leve</option><option>Antepié varo estructural moderado</option><option>Antepié varo estructural severo</option><option>Antepié varo pronado (músculo-ligamentoso)</option><option>Antepié valgo estructural</option><option>Antepié valgo supinado (músculo-ligamentoso)</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Dismetría de miembros inferiores</h3>
+        <div class="dismetria-block">
+          <h4>1ª medición (posición de reposo)</h4>
+          <div class="dismetria-row">
+            <select id="dim_1a" onchange="calcDismetria()"><option value="">– Simétrico / sin dismetría –</option><option>Pierna larga derecha</option><option>Pierna larga izquierda</option></select>
+            <input type="number" id="dim_1a_cm" placeholder="cm" min="0" max="6" step="0.5" style="text-align:center;" inputmode="decimal" oninput="calcDismetria()">
+          </div>
+          <div class="dismetria-sep">↓ Maniobra de relajación de partes blandas ↓</div>
+          <h4>2ª medición (tras maniobra)</h4>
+          <div class="dismetria-row">
+            <select id="dim_2a" onchange="calcDismetria()"><option value="">– Valorar tras maniobra –</option><option>Se iguala → Dismetría funcional</option><option>Persiste → Dismetría estructural</option></select>
+            <input type="number" id="dim_2a_cm" placeholder="cm" min="0" max="6" step="0.5" style="text-align:center;" inputmode="decimal" oninput="calcDismetria()">
+          </div>
+          <div class="dismetria-out" id="dim_out"></div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Tests musculotendinosos</h3>
+        <div class="field"><label>AKE Test – Extensibilidad isquiotibial</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="cam_ake_d"><option value="">–</option><option>Negativo (normal ≥ -20°)</option><option>Positivo leve (–20° a –30°)</option><option>Positivo moderado (–30° a –45°)</option><option>Positivo severo (&lt; –45°)</option></select>
+            <select id="cam_ake_i"><option value="">–</option><option>Negativo (normal ≥ -20°)</option><option>Positivo leve (–20° a –30°)</option><option>Positivo moderado (–30° a –45°)</option><option>Positivo severo (&lt; –45°)</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Silverskiöld – Equinismo gastrocnemio vs sóleo</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="cam_silv_d"><option value="">–</option><option>Negativo (sin equinismo)</option><option>Positivo gastrocnemio (corrige con rodilla flexionada)</option><option>Positivo sóleo (no corrige en ninguna posición)</option><option>Positivo mixto</option></select>
+            <select id="cam_silv_i"><option value="">–</option><option>Negativo (sin equinismo)</option><option>Positivo gastrocnemio (corrige con rodilla flexionada)</option><option>Positivo sóleo (no corrige en ninguna posición)</option><option>Positivo mixto</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Tests metatarsofalángicos</h3>
+        <div class="field"><label>Test de Jack / Windlass</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="cam_jack_d"><option value="">–</option><option>Positivo (mecanismo eficaz)</option><option>Positivo con resistencia leve</option><option>Positivo con resistencia moderada</option><option>Negativo (mecanismo ineficaz)</option></select>
+            <select id="cam_jack_i"><option value="">–</option><option>Positivo (mecanismo eficaz)</option><option>Positivo con resistencia leve</option><option>Positivo con resistencia moderada</option><option>Negativo (mecanismo ineficaz)</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Lachman metatarsofalángico</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="cam_lach_d"><option value="">–</option><option>Negativo</option><option>Positivo D2</option><option>Positivo D3</option><option>Positivo D2-D3</option><option>Positivo múltiple</option></select>
+            <select id="cam_lach_i"><option value="">–</option><option>Negativo</option><option>Positivo D2</option><option>Positivo D3</option><option>Positivo D2-D3</option><option>Positivo múltiple</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Test de Kelikian</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="cam_keli_d"><option value="">–</option><option>Negativo</option><option>Positivo (dedo reductible)</option><option>Parcialmente reductible</option><option>No reductible (deformidad fija)</option></select>
+            <select id="cam_keli_i"><option value="">–</option><option>Negativo</option><option>Positivo (dedo reductible)</option><option>Parcialmente reductible</option><option>No reductible (deformidad fija)</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Otros hallazgos en camilla</label><input type="text" id="cam_otros" placeholder="Ej. dolor a la palpación en tubérculo medial del calcáneo derecho"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 5: FPI -->
+  <div class="section" id="sec5">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">5</div>
+      <div class="section-label"><h2>FPI – Foot Posture Index</h2><p>6 ítems · puntuación automática D/I</p></div>
+      <span class="section-count">0</span>
+      <span class="section-chevron">⌄</span>
+    </div>
+    <div class="section-body">
+      <table class="fpi-table">
+        <thead><tr><th>Ítem</th><th>Derecho</th><th>Izquierdo</th></tr></thead>
+        <tbody>
+          <tr><td>1 · Palpación cabeza del astrágalo</td>
+            <td><select class="fpi-select" id="fpi_d_1" data-side="d" data-item="1" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Lateral marcado</option><option value="-1">–1 Lateral leve</option><option value="0">0 Centrado</option><option value="1">+1 Medial leve</option><option value="2">+2 Medial marcado</option></select></td>
+            <td><select class="fpi-select" id="fpi_i_1" data-side="i" data-item="1" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Lateral marcado</option><option value="-1">–1 Lateral leve</option><option value="0">0 Centrado</option><option value="1">+1 Medial leve</option><option value="2">+2 Medial marcado</option></select></td>
+          </tr>
+          <tr><td>2 · Curvatura supra/infra maleolar lateral</td>
+            <td><select class="fpi-select" id="fpi_d_2" data-side="d" data-item="2" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Convexidad marcada</option><option value="-1">–1 Convexidad leve</option><option value="0">0 Igual</option><option value="1">+1 Cóncava leve</option><option value="2">+2 Cóncava marcada</option></select></td>
+            <td><select class="fpi-select" id="fpi_i_2" data-side="i" data-item="2" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Convexidad marcada</option><option value="-1">–1 Convexidad leve</option><option value="0">0 Igual</option><option value="1">+1 Cóncava leve</option><option value="2">+2 Cóncava marcada</option></select></td>
+          </tr>
+          <tr><td>3 · Posición del calcáneo</td>
+            <td><select class="fpi-select" id="fpi_d_3" data-side="d" data-item="3" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Varo &gt; 5°</option><option value="-1">–1 Varo 1–4°</option><option value="0">0 Vertical</option><option value="1">+1 Valgo 1–5°</option><option value="2">+2 Valgo &gt; 5°</option></select></td>
+            <td><select class="fpi-select" id="fpi_i_3" data-side="i" data-item="3" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Varo &gt; 5°</option><option value="-1">–1 Varo 1–4°</option><option value="0">0 Vertical</option><option value="1">+1 Valgo 1–5°</option><option value="2">+2 Valgo &gt; 5°</option></select></td>
+          </tr>
+          <tr><td>4 · Prominencia talonavicular</td>
+            <td><select class="fpi-select" id="fpi_d_4" data-side="d" data-item="4" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Cóncava marcada</option><option value="-1">–1 Cóncava leve</option><option value="0">0 Plana</option><option value="1">+1 Prominencia leve</option><option value="2">+2 Prominencia marcada</option></select></td>
+            <td><select class="fpi-select" id="fpi_i_4" data-side="i" data-item="4" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Cóncava marcada</option><option value="-1">–1 Cóncava leve</option><option value="0">0 Plana</option><option value="1">+1 Prominencia leve</option><option value="2">+2 Prominencia marcada</option></select></td>
+          </tr>
+          <tr><td>5 · Congruencia arco longitudinal medial</td>
+            <td><select class="fpi-select" id="fpi_d_5" data-side="d" data-item="5" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Muy elevado</option><option value="-1">–1 Elevado</option><option value="0">0 Normal</option><option value="1">+1 Disminuido</option><option value="2">+2 Muy disminuido</option></select></td>
+            <td><select class="fpi-select" id="fpi_i_5" data-side="i" data-item="5" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Muy elevado</option><option value="-1">–1 Elevado</option><option value="0">0 Normal</option><option value="1">+1 Disminuido</option><option value="2">+2 Muy disminuido</option></select></td>
+          </tr>
+          <tr><td>6 · Abducción antepié sobre retropié</td>
+            <td><select class="fpi-select" id="fpi_d_6" data-side="d" data-item="6" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Sin dedos laterales</option><option value="-1">–1 Leve aducción</option><option value="0">0 Simétrico</option><option value="1">+1 Leve abducción</option><option value="2">+2 Abducción marcada</option></select></td>
+            <td><select class="fpi-select" id="fpi_i_6" data-side="i" data-item="6" onchange="calcFPI()"><option value="">–</option><option value="-2">–2 Sin dedos laterales</option><option value="-1">–1 Leve aducción</option><option value="0">0 Simétrico</option><option value="1">+1 Leve abducción</option><option value="2">+2 Abducción marcada</option></select></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="fpi-total-row"><td>TOTAL FPI</td><td id="fpi_total_d">–</td><td id="fpi_total_i">–</td></tr>
+        </tfoot>
+      </table>
+      <div class="fpi-result">
+        <div class="fpi-result-box">
+          <div class="side" style="color:var(--blue-mid);">▶ DERECHO</div>
+          <div class="val" id="fpi_val_d">–</div>
+          <div id="fpi_badge_d"></div>
+        </div>
+        <div class="fpi-result-box">
+          <div class="side" style="color:var(--warn);">◀ IZQUIERDO</div>
+          <div class="val" id="fpi_val_i">–</div>
+          <div id="fpi_badge_i"></div>
+        </div>
+      </div>
+      <div class="fpi-incompleto" id="fpi_aviso"></div>
+      <div class="nota" style="margin-top:12px;margin-bottom:0;">Rangos FPI-6 (Redmond): <strong>0 a +5</strong> normal · <strong>+6 a +9</strong> pronado · <strong>≥ +10</strong> altamente pronado · <strong>–1 a –4</strong> supinado · <strong>≤ –5</strong> altamente supinado.</div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 6: BIPEDESTACIÓN -->
+  <div class="section" id="sec6">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">6</div>
+      <div class="section-label"><h2>Bipedestación y tests en carga</h2><p>Alineación · EJEASA · Lunge · TCPAU · SLS</p></div>
+      <span class="section-count">0</span>
+      <span class="section-chevron">⌄</span>
+    </div>
+    <div class="section-body">
+      <div class="subsection">
+        <h3>Alineación en carga</h3>
+        <div class="field"><label>Alineación corporal (asimetrías, pelvis, escápulas)</label><input type="text" id="bip_alin" placeholder="Ej. inclinación pélvica derecha leve, escápula izq alada"></div>
+        <div class="field"><label>Retropié / Línea de Helbing</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="bip_helb_d"><option value="">–</option><option>Neutro (vertical)</option><option>Valgo leve (1–3°)</option><option>Valgo moderado (4–6°)</option><option>Valgo severo (&gt; 6°)</option><option>Varo</option></select>
+            <select id="bip_helb_i"><option value="">–</option><option>Neutro (vertical)</option><option>Valgo leve (1–3°)</option><option>Valgo moderado (4–6°)</option><option>Valgo severo (&gt; 6°)</option><option>Varo</option></select>
+          </div>
+          <div class="grid-di-label" style="margin-top:8px;"><span style="font-size:11px;color:var(--text-light);text-align:center;background:transparent;">Grados exactos D</span><span style="font-size:11px;color:var(--text-light);text-align:center;background:transparent;">Grados exactos I</span></div>
+          <div class="grid-di">
+            <input type="text" id="bip_helb_gr_d" placeholder="Ej. 6° valgo" style="text-align:center;">
+            <input type="text" id="bip_helb_gr_i" placeholder="Ej. 4° valgo" style="text-align:center;">
+          </div>
+        </div>
+        <div class="field"><label>Arco longitudinal medial (inspección visual)</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="bip_arco_d"><option value="">–</option><option>Normal</option><option>Disminuido (pie plano)</option><option>Aumentado (pie cavo)</option><option>Ausente</option></select>
+            <select id="bip_arco_i"><option value="">–</option><option>Normal</option><option>Disminuido (pie plano)</option><option>Aumentado (pie cavo)</option><option>Ausente</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Ángulo de Fick (estática)</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="bip_apg_d"><option value="">–</option><option>Normal (10–15°)</option><option>Aumentado (&gt; 15°)</option><option>Disminuido (&lt; 10°)</option><option>Aducción (negativo)</option></select>
+            <select id="bip_apg_i"><option value="">–</option><option>Normal (10–15°)</option><option>Aumentado (&gt; 15°)</option><option>Disminuido (&lt; 10°)</option><option>Aducción (negativo)</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>EJEASA – Eje articulación subastragalina</h3>
+        <div class="field">
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="bip_ejeasa_d"><option value="">–</option><option>Normal</option><option>Medializado leve</option><option>Medializado marcado</option><option>Lateralizado</option></select>
+            <select id="bip_ejeasa_i"><option value="">–</option><option>Normal</option><option>Medializado leve</option><option>Medializado marcado</option><option>Lateralizado</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Test de Hintermann (estática)</h3>
+        <div class="field">
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="bip_hinter_d"><option value="">–</option><option>Negativo</option><option>Positivo (insuf. tibial posterior)</option><option>Positivo con dolor</option></select>
+            <select id="bip_hinter_i"><option value="">–</option><option>Negativo</option><option>Positivo (insuf. tibial posterior)</option><option>Positivo con dolor</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Tests en carga</h3>
+        <div class="field"><label>Lunge Test – FD tobillo en carga</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="bip_lunge_d"><option value="">–</option><option>Normal (≥ 10 cm / ≥ 35°)</option><option>Limitado leve (6–9 cm)</option><option>Limitado moderado (3–5 cm)</option><option>Limitado severo (&lt; 3 cm)</option></select>
+            <select id="bip_lunge_i"><option value="">–</option><option>Normal (≥ 10 cm / ≥ 35°)</option><option>Limitado leve (6–9 cm)</option><option>Limitado moderado (3–5 cm)</option><option>Limitado severo (&lt; 3 cm)</option></select>
+          </div>
+          <div class="grid-di-label" style="margin-top:8px;"><span style="font-size:11px;color:var(--text-light);text-align:center;background:transparent;">cm exactos D</span><span style="font-size:11px;color:var(--text-light);text-align:center;background:transparent;">cm exactos I</span></div>
+          <div class="grid-di">
+            <input type="number" id="bip_lunge_cm_d" placeholder="cm" step="0.5" min="0" max="20" style="text-align:center;" inputmode="decimal">
+            <input type="number" id="bip_lunge_cm_i" placeholder="cm" step="0.5" min="0" max="20" style="text-align:center;" inputmode="decimal">
+          </div>
+        </div>
+        <div class="field"><label>Heel Rise Test – Elevación del talón</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="bip_heel_d"><option value="">–</option><option>Positivo (reinversión correcta)</option><option>Positivo con resistencia leve</option><option>Dudoso / parcial</option><option>Negativo (sin reinversión)</option></select>
+            <select id="bip_heel_i"><option value="">–</option><option>Positivo (reinversión correcta)</option><option>Positivo con resistencia leve</option><option>Dudoso / parcial</option><option>Negativo (sin reinversión)</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Máxima pronación</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="bip_maxpron_d"><option value="">–</option><option>Normal</option><option>Aumentada</option><option>Disminuida</option></select>
+            <select id="bip_maxpron_i"><option value="">–</option><option>Normal</option><option>Aumentada</option><option>Disminuida</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Resistencia a la supinación</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="bip_ressup_d"><option value="">–</option><option>Normal</option><option>Baja (test positivo)</option><option>Muy baja</option><option>Aumentada</option></select>
+            <select id="bip_ressup_i"><option value="">–</option><option>Normal</option><option>Baja (test positivo)</option><option>Muy baja</option><option>Aumentada</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>TCPAU y control proximal</h3>
+        <div class="nota warn">Realiza y anota el TCPAU <strong>antes</strong> del Single Leg Squat.</div>
+        <div class="field"><label>TCPAU – Test Control Pronación Apoyo Unipodal</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="bip_tcpau_d"><option value="">–</option><option>Normal (control adecuado)</option><option>Alterado leve (pronación sin compensar)</option><option>Alterado moderado (desequilibrio distal)</option><option>Alterado severo (colapso con RI + aducción)</option></select>
+            <select id="bip_tcpau_i"><option value="">–</option><option>Normal (control adecuado)</option><option>Alterado leve (pronación sin compensar)</option><option>Alterado moderado (desequilibrio distal)</option><option>Alterado severo (colapso con RI + aducción)</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Single Leg Squat</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="bip_sls_d"><option value="">–</option><option>Normal</option><option>Valgo dinámico rodilla leve</option><option>Valgo dinámico rodilla moderado</option><option>Caída pélvica contralateral</option><option>Rotación interna femoral</option><option>Aducción de cadera</option><option>Patrón mixto distal-proximal</option></select>
+            <select id="bip_sls_i"><option value="">–</option><option>Normal</option><option>Valgo dinámico rodilla leve</option><option>Valgo dinámico rodilla moderado</option><option>Caída pélvica contralateral</option><option>Rotación interna femoral</option><option>Aducción de cadera</option><option>Patrón mixto distal-proximal</option></select>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0;"><label>Observaciones en carga</label><input type="text" id="bip_obs" placeholder="Ej. Trendelenburg positivo derecho, dolor en descenso"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 7: VALORACIÓN MUSCULAR -->
+  <div class="section" id="sec7">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">7</div>
+      <div class="section-label"><h2>Valoración muscular</h2><p>Escala Daniels 0–5 · Derecho / Izquierdo</p></div>
+      <span class="section-count">0</span>
+      <span class="section-chevron">⌄</span>
+    </div>
+    <div class="section-body">
+      <div class="nota">Escala Daniels: <strong>0</strong> Sin contracción · <strong>1</strong> Contracción sin movimiento · <strong>2</strong> Mov. sin gravedad · <strong>3</strong> Mov. contra gravedad · <strong>4</strong> Contra resistencia parcial · <strong>5</strong> Normal. Los valores <strong>≤ 3</strong> se resaltan en rojo.</div>
+      <div class="col-header">
+        <span style="font-size:12px;color:var(--text-mid);font-weight:600;text-align:left;">Músculo / grupo</span>
+        <span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span>
+      </div>
+      <div class="muscle-grid" id="muscleGrid"></div>
+      <div class="field" style="margin-top:14px;margin-bottom:0;"><label>Observaciones musculares</label><textarea id="mu_obs" placeholder="Ej. debilidad glúteo medio bilateral, hipotrofia gastrocnemio derecho"></textarea></div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 8: VALORACIÓN ARTICULAR -->
+  <div class="section" id="sec8">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">8</div>
+      <div class="section-label"><h2>Valoración articular</h2><p>Rango de movimiento · Derecho / Izquierdo</p></div>
+      <span class="section-count">0</span>
+      <span class="section-chevron">⌄</span>
+    </div>
+    <div class="section-body">
+      <div class="col-header">
+        <span style="font-size:12px;color:var(--text-mid);font-weight:600;text-align:left;">Articulación / Movimiento</span>
+        <span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span>
+      </div>
+      <div class="joint-grid" id="jointGrid"></div>
+      <div class="field" style="margin-top:14px;margin-bottom:0;"><label>Observaciones articulares</label><textarea id="ar_obs" placeholder="Ej. rigidez talonavicular bilateral, limitación FD tobillo derecho con tope óseo"></textarea></div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 9: PLATAFORMA Y DINÁMICA -->
+  <div class="section" id="sec9">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">9</div>
+      <div class="section-label"><h2>NeoPlate · Marcha · Carrera</h2><p>Plataforma de presiones y análisis en vídeo</p></div>
+      <span class="section-count">0</span>
+      <span class="section-chevron">⌄</span>
+    </div>
+    <div class="section-body">
+
+      <!-- NEOPLATE -->
+      <div class="subsection">
+        <h3>Plataforma NeoPlate</h3>
+        <div class="field"><label>Capturas disponibles</label>
+          <div class="chk-wrap">
+            <label class="chk"><input type="checkbox" id="np_est"> Estática habitual</label>
+            <label class="chk"><input type="checkbox" id="np_85"> Norma 85</label>
+            <label class="chk"><input type="checkbox" id="np_din"> Dinámica</label>
+            <label class="chk"><input type="checkbox" id="np_ort"> Con ortesis</label>
+          </div>
+        </div>
+        <div class="np-grid">
+          <div class="field"><label>Reparto I / D (%)</label><input type="text" id="np_reparto_id" placeholder="Ej. I 48% / D 52%"></div>
+          <div class="field"><label>Reparto antepié / retropié</label><input type="text" id="np_reparto_ar" placeholder="Ej. AP 42% / RP 58%"></div>
+        </div>
+        <div class="field"><label>Posición centro de presiones (CdP)</label><select id="np_cdp"><option value="">–</option><option>Centrado</option><option>Antepulsión</option><option>Retropulsión</option><option>Lateralizado derecho</option><option>Lateralizado izquierdo</option><option>Mixto / asimétrico</option></select></div>
+        <div class="field"><label>Patrón bajo Norma 85 (respecto a habitual)</label><select id="np_n85"><option value="">–</option><option>Patrón se mantiene</option><option>Mejora distribución</option><option>Se descompensa</option><option>No realizada</option></select></div>
+        <div class="field" style="margin-bottom:0;"><label>Notas NeoPlate (solo si algo no se lee en imagen)</label><textarea id="np_notas" placeholder="Ej. artefacto en M3 derecho, imagen dinámica con 4 huellas válidas" style="min-height:60px;"></textarea></div>
+      </div>
+
+      <!-- MARCHA EN VÍDEO — ROCKERS -->
+      <div class="subsection">
+        <h3>Exploración dinámica de la marcha (Rockers)</h3>
+        <div class="nota">Solo marca lo <strong>alterado</strong>. Vacío = fisiológico. Lo que marques se resalta en dorado.</div>
+
+        <div class="rocker-col-header">
+          <span>Parámetro</span><span style="color:#1A56DB;">Izquierdo</span><span style="color:#C05621;">Derecho</span>
+        </div>
+
+        <div class="rocker-block">
+          <div class="rocker-header rocker-1">🔵 1º Rocker — Contacto de talón</div>
+          <div class="rocker-body">
+            <div class="rocker-row">
+              <span class="rocker-param">Ángulo progresión marcha</span>
+              <select id="r1_apg_i" class="alt-sel"><option value="">N</option><option>Aumentado</option><option>Disminuido</option></select>
+              <select id="r1_apg_d" class="alt-sel"><option value="">N</option><option>Aumentado</option><option>Disminuido</option></select>
+            </div>
+            <div class="rocker-row">
+              <span class="rocker-param">Extensión de rodilla</span>
+              <select id="r1_ext_rod_i" class="alt-sel"><option value="">N</option><option>Aumentada</option><option>Disminuida</option></select>
+              <select id="r1_ext_rod_d" class="alt-sel"><option value="">N</option><option>Aumentada</option><option>Disminuida</option></select>
+            </div>
+            <div class="rocker-row">
+              <span class="rocker-param">Apoyo en supinación</span>
+              <select id="r1_sup_i" class="alt-sel"><option value="">N</option><option>Aumentado</option><option>Disminuido</option></select>
+              <select id="r1_sup_d" class="alt-sel"><option value="">N</option><option>Aumentado</option><option>Disminuido</option></select>
+            </div>
+            <div class="rocker-row">
+              <span class="rocker-param">Sustitución extensora</span>
+              <select id="r1_sust_i" class="alt-sel"><option value="">No</option><option>Sí</option></select>
+              <select id="r1_sust_d" class="alt-sel"><option value="">No</option><option>Sí</option></select>
+            </div>
+            <div class="rocker-obs"><textarea id="r1_obs" placeholder="Observaciones 1º Rocker…" style="min-height:52px;"></textarea></div>
+          </div>
+        </div>
+
+        <div class="rocker-block">
+          <div class="rocker-header rocker-2">🟢 2º Rocker — Apoyo medio</div>
+          <div class="rocker-body">
+            <div class="rocker-row">
+              <span class="rocker-param">Ángulo progresión marcha</span>
+              <select id="r2_apg_i" class="alt-sel"><option value="">N</option><option>Aumentado</option><option>Disminuido</option></select>
+              <select id="r2_apg_d" class="alt-sel"><option value="">N</option><option>Aumentado</option><option>Disminuido</option></select>
+            </div>
+            <div class="rocker-row">
+              <span class="rocker-param">Flexión de rodilla</span>
+              <select id="r2_flex_rod_i" class="alt-sel"><option value="">N</option><option>Aumentada</option><option>Disminuida</option></select>
+              <select id="r2_flex_rod_d" class="alt-sel"><option value="">N</option><option>Aumentada</option><option>Disminuida</option></select>
+            </div>
+            <div class="rocker-row">
+              <span class="rocker-param">Elevación precoz del calcáneo</span>
+              <select id="r2_elev_i" class="alt-sel"><option value="">N</option><option>Presente</option></select>
+              <select id="r2_elev_d" class="alt-sel"><option value="">N</option><option>Presente</option></select>
+            </div>
+            <div class="rocker-row">
+              <span class="rocker-param">Pronación</span>
+              <select id="r2_pron_i" class="alt-sel"><option value="">N</option><option>Aumentada</option><option>Disminuida</option><option>Tardía</option></select>
+              <select id="r2_pron_d" class="alt-sel"><option value="">N</option><option>Aumentada</option><option>Disminuida</option><option>Tardía</option></select>
+            </div>
+            <div class="rocker-row">
+              <span class="rocker-param">Traslado carga 5º→1º MettF</span>
+              <select id="r2_traslado_i" class="alt-sel"><option value="">N</option><option>Alterado</option><option>Insuficiente</option></select>
+              <select id="r2_traslado_d" class="alt-sel"><option value="">N</option><option>Alterado</option><option>Insuficiente</option></select>
+            </div>
+            <div class="rocker-obs"><textarea id="r2_obs" placeholder="Observaciones 2º Rocker…" style="min-height:52px;"></textarea></div>
+          </div>
+        </div>
+
+        <div class="rocker-block">
+          <div class="rocker-header rocker-3">🟡 3º Rocker — Propulsión</div>
+          <div class="rocker-body">
+            <div class="rocker-row">
+              <span class="rocker-param">Ángulo progresión marcha</span>
+              <select id="r3_apg_i" class="alt-sel"><option value="">N</option><option>Aumentado</option><option>Disminuido</option></select>
+              <select id="r3_apg_d" class="alt-sel"><option value="">N</option><option>Aumentado</option><option>Disminuido</option></select>
+            </div>
+            <div class="rocker-row">
+              <span class="rocker-param">Apoyo 1º metatarsiano</span>
+              <select id="r3_m1_i" class="alt-sel"><option value="">N</option><option>Insuficiente</option><option>Aumentado</option></select>
+              <select id="r3_m1_d" class="alt-sel"><option value="">N</option><option>Insuficiente</option><option>Aumentado</option></select>
+            </div>
+            <div class="rocker-row">
+              <span class="rocker-param">Extensión 1ª MettF</span>
+              <select id="r3_mtf_i" class="alt-sel"><option value="">N</option><option>Disminuida</option><option>Aumentada</option></select>
+              <select id="r3_mtf_d" class="alt-sel"><option value="">N</option><option>Disminuida</option><option>Aumentada</option></select>
+            </div>
+            <div class="rocker-row">
+              <span class="rocker-param">Despegue columna</span>
+              <select id="r3_desp_i" class="alt-sel"><option value="">N (interna)</option><option>Externa</option><option>Mixta</option></select>
+              <select id="r3_desp_d" class="alt-sel"><option value="">N (interna)</option><option>Externa</option><option>Mixta</option></select>
+            </div>
+            <div class="rocker-obs"><textarea id="r3_obs" placeholder="Observaciones 3º Rocker…" style="min-height:52px;"></textarea></div>
+          </div>
+        </div>
+
+        <div class="rocker-block">
+          <div class="rocker-header rocker-vuelo">🟣 Fase de vuelo / oscilación</div>
+          <div class="rocker-body">
+            <div class="rocker-row">
+              <span class="rocker-param">Ángulo progresión marcha</span>
+              <select id="rv_apg_i" class="alt-sel"><option value="">N</option><option>Aumentado</option><option>Disminuido</option></select>
+              <select id="rv_apg_d" class="alt-sel"><option value="">N</option><option>Aumentado</option><option>Disminuido</option></select>
+            </div>
+            <div class="rocker-row">
+              <span class="rocker-param">Sustitución extensora</span>
+              <select id="rv_sust_i" class="alt-sel"><option value="">No</option><option>Sí</option></select>
+              <select id="rv_sust_d" class="alt-sel"><option value="">No</option><option>Sí</option></select>
+            </div>
+            <div class="rocker-obs"><textarea id="rv_obs" placeholder="Observaciones fase de vuelo…" style="min-height:52px;"></textarea></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARRERA -->
+      <div class="subsection" id="carrera_block">
+        <h3>Exploración de la carrera (si procede)</h3>
+
+        <div class="nota" style="margin-bottom:12px;">Bloque general · datos del corredor</div>
+        <div style="border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">TÉCNICA</div>
+          <div class="field"><label>Tipo de contacto</label><select id="car_contacto"><option value="">–</option><option>Talón</option><option>Mediopié</option><option>Antepié</option><option>Mixto</option><option>Asimétrico (D ≠ I)</option></select></div>
+          <div class="field"><label>Zancada</label><select id="car_zancada"><option value="">–</option><option>Normal</option><option>Larga</option><option>Larga con crossover</option></select></div>
+          <div class="field"><label>Superposición</label><select id="car_superp"><option value="">–</option><option>No</option><option>Sí</option></select></div>
+          <div class="field"><label>Tipo de oscilación</label><select id="car_oscilacion"><option value="">–</option><option>Pendular</option><option>Circular anterior</option><option>Circular posterior</option><option>Circular media</option></select></div>
+          <div class="field"><label>Cadencia (ppm) y velocidad de la prueba</label><input type="text" id="car_cadencia" placeholder="Ej. 168 ppm a 12 km/h en tapiz"></div>
+          <div class="field" style="margin-bottom:0;"><label>Zapatilla(s) con la que se realiza la prueba</label><input type="text" id="car_zapatilla" placeholder="Ej. Nike Vaporfly 4 / Brooks Ghost 16 (2ª prueba)"></div>
+        </div>
+
+        <div class="carrera-block">
+          <div class="carrera-header carrera-sagital">📐 Plano Sagital</div>
+          <div class="carrera-body">
+            <div class="rocker-col-header" style="margin-bottom:8px;">
+              <span>Parámetro</span><span style="color:#1A56DB;">Izquierdo</span><span style="color:#C05621;">Derecho</span>
+            </div>
+            <div class="carrera-fase-title">Contacto inicial</div>
+            <div class="carrera-row">
+              <span class="carrera-param">Tipo de apoyo</span>
+              <select id="cs_ci_i" class="alt-sel"><option value="">N</option><option>Retropié</option><option>Mediopié</option><option>Antepié</option></select>
+              <select id="cs_ci_d" class="alt-sel"><option value="">N</option><option>Retropié</option><option>Mediopié</option><option>Antepié</option></select>
+            </div>
+            <div class="carrera-fase-title">Máxima absorción</div>
+            <div class="carrera-row">
+              <span class="carrera-param">Flexión de rodilla</span>
+              <select id="cs_ma_rod_i" class="alt-sel"><option value="">N</option><option>Aumentada</option><option>Limitada</option></select>
+              <select id="cs_ma_rod_d" class="alt-sel"><option value="">N</option><option>Aumentada</option><option>Limitada</option></select>
+            </div>
+            <div class="carrera-fase-title">Propulsión</div>
+            <div class="carrera-row">
+              <span class="carrera-param">Extensión de cadera</span>
+              <select id="cs_p_cad_i" class="alt-sel"><option value="">N</option><option>Limitada</option></select>
+              <select id="cs_p_cad_d" class="alt-sel"><option value="">N</option><option>Limitada</option></select>
+            </div>
+            <div class="carrera-row">
+              <span class="carrera-param">Extensión de rodilla</span>
+              <select id="cs_p_rod_i" class="alt-sel"><option value="">N</option><option>Limitada</option></select>
+              <select id="cs_p_rod_d" class="alt-sel"><option value="">N</option><option>Limitada</option></select>
+            </div>
+            <div class="carrera-row">
+              <span class="carrera-param">Flex-ext 1ª MettF</span>
+              <select id="cs_p_mtf_i" class="alt-sel"><option value="">N</option><option>Alterada</option></select>
+              <select id="cs_p_mtf_d" class="alt-sel"><option value="">N</option><option>Alterada</option></select>
+            </div>
+            <div class="carrera-fase-title">Oscilación inicial · media · final</div>
+            <div class="field" style="margin-bottom:0;"><textarea id="cs_osc_obs" placeholder="Solo si hay alteración en alguna subfase de oscilación…" style="min-height:60px;"></textarea></div>
+          </div>
+        </div>
+
+        <div class="carrera-block" style="margin-bottom:0;">
+          <div class="carrera-header carrera-frontal">📏 Plano Frontal</div>
+          <div class="carrera-body">
+            <div class="rocker-col-header" style="margin-bottom:8px;">
+              <span>Parámetro</span><span style="color:#1A56DB;">Izquierdo</span><span style="color:#C05621;">Derecho</span>
+            </div>
+            <div class="carrera-fase-title">Contacto inicial</div>
+            <div class="carrera-row">
+              <span class="carrera-param">Alineación MMII</span>
+              <select id="cf_ci_ali_i" class="alt-sel"><option value="">N</option><option>Aducción</option><option>Abducción</option></select>
+              <select id="cf_ci_ali_d" class="alt-sel"><option value="">N</option><option>Aducción</option><option>Abducción</option></select>
+            </div>
+            <div class="carrera-row">
+              <span class="carrera-param">Base de apoyo</span>
+              <select id="cf_ci_base_i" class="alt-sel"><option value="">N</option><option>Estrecha</option><option>Cruzada</option></select>
+              <select id="cf_ci_base_d" class="alt-sel"><option value="">N</option><option>Estrecha</option><option>Cruzada</option></select>
+            </div>
+            <div class="carrera-fase-title">Máxima absorción</div>
+            <div class="carrera-row">
+              <span class="carrera-param">Valgo dinámico rodilla</span>
+              <select id="cf_ma_valgo_i" class="alt-sel"><option value="">N</option><option>Leve</option><option>Moderado</option></select>
+              <select id="cf_ma_valgo_d" class="alt-sel"><option value="">N</option><option>Leve</option><option>Moderado</option></select>
+            </div>
+            <div class="carrera-row">
+              <span class="carrera-param">Caída pélvica</span>
+              <select id="cf_ma_pelvis_i" class="alt-sel"><option value="">N</option><option>Aumentada</option><option>Disminuida</option></select>
+              <select id="cf_ma_pelvis_d" class="alt-sel"><option value="">N</option><option>Aumentada</option><option>Disminuida</option></select>
+            </div>
+            <div class="carrera-row">
+              <span class="carrera-param">Pronación retropié</span>
+              <select id="cf_ma_pron_i" class="alt-sel"><option value="">N</option><option>Aumentada</option></select>
+              <select id="cf_ma_pron_d" class="alt-sel"><option value="">N</option><option>Aumentada</option></select>
+            </div>
+            <div class="carrera-fase-title">Propulsión</div>
+            <div class="carrera-row">
+              <span class="carrera-param">Despegue columna</span>
+              <select id="cf_p_desp_i" class="alt-sel"><option value="">N (interna)</option><option>Externa</option><option>Mixta</option></select>
+              <select id="cf_p_desp_d" class="alt-sel"><option value="">N (interna)</option><option>Externa</option><option>Mixta</option></select>
+            </div>
+            <div class="carrera-row">
+              <span class="carrera-param">Alineación tobillo-cadera-hombro</span>
+              <select id="cf_p_alin_i" class="alt-sel"><option value="">N</option><option>Alterada</option></select>
+              <select id="cf_p_alin_d" class="alt-sel"><option value="">N</option><option>Alterada</option></select>
+            </div>
+            <div class="carrera-fase-title">Oscilaciones inicial · media · final</div>
+            <div class="field" style="margin-bottom:0;"><textarea id="cf_osc_obs" placeholder="Solo si hay alteración en alguna subfase de oscilación…" style="min-height:60px;"></textarea></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 10: CIERRE CLÍNICO -->
+  <div class="section" id="sec10">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">10</div>
+      <div class="section-label"><h2>Cierre clínico</h2><p>Impresión, tratamiento, revisión, salida</p></div>
+      <span class="section-count">0</span>
+      <span class="section-chevron">⌄</span>
+    </div>
+    <div class="section-body">
+      <div class="field"><label>Impresión clínica (tu orientación)</label><textarea id="cie_imp" placeholder="Ej. pie plano flexible con insuficiencia 1er radio bilateral + tendón de Aquiles corto"></textarea></div>
+      <div class="field"><label>Tratamiento a indicar</label><textarea id="cie_trat" placeholder="Ej. plantillas con alza retrocapital + cuña supinadora retropié · fisioterapia excéntrica"></textarea></div>
+      <div class="field"><label>Próxima revisión</label><input type="text" id="cie_revision" placeholder="Ej. 3 meses · al mes con plantillas nuevas"></div>
+      <div class="field"><label>Tipo de salida del informe</label>
+        <select id="cie_salida">
+          <option value="DOCX Pododepor (informe completo)">DOCX Pododepor (informe completo)</option>
+          <option value="Texto primero, DOCX después">Texto primero, DOCX después</option>
+          <option value="Resumen breve para derivación">Resumen breve para derivación</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:0;"><label>Observaciones finales / notas para Claude</label><textarea id="cie_obs" placeholder="Cualquier dato adicional, contexto o instrucción especial"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ACCIONES -->
+  <div class="actions">
+    <button class="btn btn-gold btn-wide" onclick="copiarParaClaude()">📋 Copiar para Claude</button>
+    <button class="btn btn-primary" onclick="guardarEnHistorial()">💾 Guardar ficha</button>
+    <button class="btn" onclick="previsualizar()">👁 Previsualizar</button>
+    <button class="btn" onclick="abrirHistorial()">🗂 Historial</button>
+    <button class="btn btn-danger" onclick="nuevaFicha()">↺ Nueva ficha</button>
+  </div>
+
+  <p style="text-align:center;font-size:11px;color:var(--text-light);margin-top:16px;line-height:1.6;">
+    Los datos se guardan <strong>solo en este dispositivo</strong> (almacenamiento local del navegador).<br>
+    Historial <strong>cifrado</strong> con tu contraseña. Identifica las fichas por nº de historia clínica, nunca por nombre.
+  </p>
+
+</div>
+
+<div class="fab-wrap">
+  <button class="fab small" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Ir arriba">↑</button>
+  <button class="fab gold" onclick="copiarParaClaude()" title="Copiar para Claude">📋</button>
+</div>
+
+<!-- MODAL HISTORIAL -->
+<div class="modal" id="modalHist" onclick="if(event.target===this) cerrarModal('modalHist')">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <h3>🗂 Historial de fichas</h3>
+        <p id="histSub">0 fichas guardadas en este dispositivo</p>
+      </div>
+      <button class="modal-close" onclick="cerrarModal('modalHist')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="search-row">
+        <input type="text" id="histSearch" placeholder="Buscar por nº historia, fecha o impresión…" oninput="renderHistorial()" autocomplete="off">
+      </div>
+      <div id="histList"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="exportarJSON()">⬇ Exportar copia</button>
+      <button class="btn" onclick="document.getElementById('fileImport').click()">⬆ Importar copia</button>
+      <button class="btn" onclick="cambiarContrasena()">🔑 Cambiar contraseña</button>
+      <button class="btn" onclick="cerrarModal('modalHist'); bloquear('manual');">🔒 Bloquear ahora</button>
+      <input type="file" id="fileImport" accept="application/json,.json" style="display:none" onchange="importarJSON(event)">
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PREVIEW -->
+<div class="modal" id="modalPrev" onclick="if(event.target===this) cerrarModal('modalPrev')">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <h3>👁 Vista previa del texto</h3>
+        <p>Esto es exactamente lo que se copia para Claude</p>
+      </div>
+      <button class="modal-close" onclick="cerrarModal('modalPrev')">✕</button>
+    </div>
+    <div class="modal-body"><div class="preview" id="prevBox"></div></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="cerrarModal('modalPrev')">Cerrar</button>
+      <button class="btn btn-gold" onclick="cerrarModal('modalPrev'); copiarParaClaude()">📋 Copiar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   FICHA EXPLORACIÓN BIOMECÁNICA · PODODEPOR 2026 (v6)
+   Emilio Gago · App autocontenida, sin dependencias externas.
+   Almacenamiento 100% local (localStorage), con fallback a memoria.
+   ============================================================ */
+
+const KEY_DRAFT = 'pododepor_borrador_v6';
+const KEY_HIST  = 'pododepor_historial_v6';
+
+/* ---------- Esquemas de tablas generadas ---------- */
+const MUSCULOS = [
+  ['Gastrocnemio','mu_gastro'], ['Sóleo','mu_soleo'],
+  ['Tibial anterior','mu_tibant'], ['Tibial posterior','mu_tibpos'],
+  ['Peroneos (largo/corto)','mu_peron'], ['Flexor hallux largo','mu_fhl'],
+  ['Extensor hallux largo','mu_ehl'], ['Cuádriceps','mu_cuad'],
+  ['Isquiotibiales','mu_isq'], ['Glúteo medio','mu_glm'],
+  ['Glúteo mayor','mu_glmay'], ['Psoas-ilíaco','mu_psoas'],
+];
+
+const ARTICULACIONES = [
+  { grupo: 'Tobillo', filas: [
+    ['FD descarga (dorsiflexión)','ar_fd_des', ['Normal (≥ 10°)','Limitada leve','Limitada moderada','Aumentada','Bloqueada']],
+    ['Flexión plantar','ar_fp', ['Normal (≥ 40°)','Limitada leve','Limitada moderada','Aumentada','Bloqueada']],
+  ]},
+  { grupo: 'Subastragalina', filas: [
+    ['Pronación','ar_sa_pron', ['Normal','Disminuida','Aumentada','Bloqueada']],
+    ['Supinación','ar_sa_sup', ['Normal','Disminuida','Aumentada','Bloqueada']],
+  ]},
+  { grupo: 'Primera MTF', filas: [
+    ['Dorsiflexión 1ª MTF','ar_mtf', ['Normal (≥ 65°)','Disminuida leve (45–64°)','Disminuida mod. (20–44°)','HLF / Hallux limitus','Hallux rígidus']],
+  ]},
+  { grupo: 'Rodilla', filas: [
+    ['Extensión','ar_rod_ext', ['Completa (0°)','Recurvatum','Déficit leve (0–10°)','Déficit moderado (10–20°)','Déficit severo (> 20°)']],
+    ['Flexión','ar_rod_flex', ['Normal (≥ 135°)','Disminuida leve','Disminuida moderada','Bloqueada']],
+  ]},
+  { grupo: 'Cadera', filas: [
+    ['Rotación interna','ar_cad_ri', ['Normal (≥ 40°)','Disminuida leve','Disminuida moderada','Aumentada','Bloqueada']],
+    ['Rotación externa','ar_cad_re', ['Normal (≥ 45°)','Disminuida leve','Disminuida moderada','Aumentada','Bloqueada']],
+    ['Abducción','ar_cad_abd', ['Normal (≥ 40°)','Disminuida leve','Disminuida moderada','Aumentada','Bloqueada']],
+    ['Flexión','ar_cad_flex', ['Normal (≥ 120°)','Disminuida leve','Disminuida moderada','Bloqueada']],
+  ]},
+];
+
+// Etiquetas para el volcado de la sección articular (mismo orden que arriba)
+const ART_LABELS = [
+  ['FD descarga tobillo','ar_fd_des'], ['Flexión plantar','ar_fp'],
+  ['Pronación subastragalina','ar_sa_pron'], ['Supinación subastragalina','ar_sa_sup'],
+  ['Dorsiflexión 1ª MTF','ar_mtf'], ['Extensión rodilla','ar_rod_ext'],
+  ['Flexión rodilla','ar_rod_flex'], ['Rotación interna cadera','ar_cad_ri'],
+  ['Rotación externa cadera','ar_cad_re'], ['Abducción cadera','ar_cad_abd'],
+  ['Flexión cadera','ar_cad_flex'],
+];
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function construirTablas() {
+  const mg = document.getElementById('muscleGrid');
+  mg.innerHTML = MUSCULOS.map(([nombre, id]) => {
+    const opts = ['<option value="">–</option>'].concat([0,1,2,3,4,5].map(n => `<option>${n}</option>`)).join('');
+    return `<div class="muscle-row"><span class="muscle-name">${esc(nombre)}</span>` +
+           `<select id="${id}_d" class="daniels">${opts}</select>` +
+           `<select id="${id}_i" class="daniels">${opts}</select></div>`;
+  }).join('');
+
+  const jg = document.getElementById('jointGrid');
+  jg.innerHTML = ARTICULACIONES.map(({grupo, filas}) => {
+    const cab = `<div class="subsection" style="margin:12px 0 4px;"><h3>${esc(grupo)}</h3></div>`;
+    const rows = filas.map(([nombre, id, opciones]) => {
+      const opts = ['<option value="">–</option>'].concat(opciones.map(o => `<option>${esc(o)}</option>`)).join('');
+      return `<div class="joint-row"><span class="joint-name">${esc(nombre)}</span>` +
+             `<select id="${id}_d">${opts}</select><select id="${id}_i">${opts}</select></div>`;
+    }).join('');
+    return cab + rows;
+  }).join('');
+}
+
+/* ---------- Utilidades de campo ---------- */
+const $ = id => document.getElementById(id);
+const g = id => { const el = $(id); return el ? String(el.value).trim() : ''; };
+const gc = id => { const el = $(id); return el ? el.checked : false; };
+// Valor "solo si está alterado": ignora los valores normales por defecto
+const gR = id => { const v = g(id); return (v && v !== 'N' && v !== 'No' && v !== 'N (interna)') ? v : ''; };
+
+function todosLosCampos() {
+  return Array.from(document.querySelectorAll('.container select[id], .container input[id], .container textarea[id]'))
+    .filter(el => el.id && el.id !== 'histSearch');
+}
+
+/* ---------- Secciones ---------- */
+function toggleSection(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+function abrirSeccion(id) {
+  const sec = $(id); if (!sec) return;
+  const h = sec.querySelector('.section-header');
+  if (!h.classList.contains('open')) toggleSection(h);
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---------- Perfil ---------- */
+function aplicarPerfil() {
+  const act = g('p_actividad');
+  const show = (id, on) => { const el = $(id); if (el) el.style.display = on ? 'block' : 'none'; };
+  show('calz_diario_block', true);
+  show('calz_deportivo_block', act !== 'no_dep');
+  show('calz_placa_block', act === 'corredor');
+  show('carrera_block', act !== 'no_dep');
+  show('compite_field', act !== 'no_dep');
+  const sub = $('hdrSub');
+  const etapaTxt = { adulto: 'Adulto', nino: 'Niño', mayor: 'Mayor' }[g('p_etapa')] || 'Adulto';
+  const actTxt = { no_dep: 'No deportista', dep_gen: 'Deportista', corredor: 'Corredor' }[act] || '';
+  const hc = g('p_historia');
+  sub.textContent = (hc ? 'HC ' + hc + ' · ' : 'Pododepor · ') + etapaTxt + ' · ' + actTxt;
+  actualizarUI();
+}
+
+/* ---------- FPI ---------- */
+function categoriaFPI(total) {
+  if (total >= 10) return ['Altamente pronado', 'fpi-muy'];
+  if (total >= 6)  return ['Pronado', 'fpi-pronado'];
+  if (total >= 0)  return ['Normal / Neutro', 'fpi-normal'];
+  if (total >= -4) return ['Supinado', 'fpi-supinado'];
+  return ['Altamente supinado', 'fpi-muy'];
+}
+
+function calcFPI() {
+  let incompletos = [];
+  ['d','i'].forEach(side => {
+    let total = 0, count = 0;
+    document.querySelectorAll(`.fpi-select[data-side="${side}"]`).forEach(sel => {
+      if (sel.value !== '') { total += parseInt(sel.value, 10); count++; }
+    });
+    const valEl = $(`fpi_val_${side}`), totalEl = $(`fpi_total_${side}`), badgeEl = $(`fpi_badge_${side}`);
+    if (count === 0) { valEl.textContent = '–'; totalEl.textContent = '–'; badgeEl.innerHTML = ''; return; }
+    valEl.textContent = (total > 0 ? '+' : '') + total;
+    totalEl.textContent = (total > 0 ? '+' : '') + total;
+    const [cat, cls] = categoriaFPI(total);
+    // Solo etiquetamos la categoría cuando los 6 ítems están puntuados: con menos, el total no es interpretable.
+    if (count < 6) {
+      badgeEl.innerHTML = `<span class="fpi-badge" style="background:#EDF2F7;color:#718096;">Parcial ${count}/6</span>`;
+      incompletos.push(side === 'd' ? 'derecho' : 'izquierdo');
+    } else {
+      badgeEl.innerHTML = `<span class="fpi-badge ${cls}">${cat}</span>`;
+    }
+  });
+  const aviso = $('fpi_aviso');
+  if (incompletos.length) {
+    aviso.textContent = `⚠ FPI incompleto en el pie ${incompletos.join(' y ')}: el total solo es interpretable con los 6 ítems puntuados.`;
+    aviso.classList.add('show');
+  } else { aviso.classList.remove('show'); }
+  actualizarUI();
+}
+
+/* ---------- IMC ---------- */
+function calcIMC() {
+  const peso = parseFloat(g('p_peso')), talla = parseFloat(g('p_talla'));
+  const box = $('imc_box');
+  if (!peso || !talla || talla < 60) { box.style.display = 'none'; return; }
+  const imc = peso / Math.pow(talla / 100, 2);
+  let cat = '';
+  if (imc < 18.5) cat = '· bajo peso';
+  else if (imc < 25) cat = '· normopeso';
+  else if (imc < 30) cat = '· sobrepeso';
+  else cat = '· obesidad';
+  $('imc_val').textContent = imc.toFixed(1) + ' kg/m²';
+  $('imc_cat').textContent = cat;
+  box.style.display = 'block';
+}
+
+/* ---------- Dismetría ---------- */
+function calcDismetria() {
+  const out = $('dim_out');
+  const v1 = g('dim_1a'), cm1 = g('dim_1a_cm'), v2 = g('dim_2a'), cm2 = g('dim_2a_cm');
+  if (!v1 && !v2) { out.classList.remove('show'); return; }
+  let txt = '';
+  if (v1) txt += `1ª medición: ${v1}${cm1 ? ' (' + cm1 + ' cm)' : ''}`;
+  if (v2) txt += (txt ? ' → ' : '') + `${v2}${cm2 ? ' (' + cm2 + ' cm)' : ''}`;
+  out.textContent = txt;
+  out.classList.add('show');
+}
+
+/* ---------- Resaltados clínicos ---------- */
+function resaltarCampos() {
+  document.querySelectorAll('select.daniels').forEach(sel => {
+    const n = parseInt(sel.value, 10);
+    sel.classList.toggle('flag-low', !isNaN(n) && n <= 3);
+  });
+  document.querySelectorAll('select.alt-sel').forEach(sel => {
+    sel.classList.toggle('alterado', sel.value !== '');
+  });
+  todosLosCampos().forEach(el => {
+    if (el.type === 'checkbox') { el.closest('.chk')?.classList.toggle('on', el.checked); return; }
+    if (el.tagName === 'SELECT' && !el.classList.contains('alt-sel') && !el.classList.contains('daniels')) {
+      el.classList.toggle('touched', el.value !== '');
+    }
+  });
+}
+
+/* ---------- Progreso ---------- */
+function actualizarUI() {
+  resaltarCampos();
+  let totalGlobal = 0, llenoGlobal = 0;
+  document.querySelectorAll('.section').forEach(sec => {
+    if (sec.classList.contains('hidden-profile')) return;
+    // Los bloques que el perfil oculta no cuentan: un no deportista no debe ver su ficha al 60% para siempre.
+    const visibles = Array.from(sec.querySelectorAll('select[id], input[id], textarea[id]'))
+      .filter(el => { const f = el.closest('#calz_deportivo_block, #calz_placa_block, #carrera_block, #compite_field'); return !f || f.style.display !== 'none'; });
+    let lleno = 0;
+    visibles.forEach(el => {
+      if (el.type === 'checkbox') { if (el.checked) lleno++; }
+      else if (el.value && String(el.value).trim() !== '') lleno++;
+    });
+    const badge = sec.querySelector('.section-count');
+    const num = sec.querySelector('.section-num');
+    if (badge) {
+      badge.textContent = lleno + '/' + visibles.length;
+      badge.classList.toggle('has-data', lleno > 0);
+    }
+    if (num) num.classList.toggle('has-data', lleno > 0);
+    totalGlobal += visibles.length; llenoGlobal += lleno;
+  });
+  const pct = totalGlobal ? Math.round((llenoGlobal / totalGlobal) * 100) : 0;
+  $('progressBar').style.width = pct + '%';
+  $('statusPct').textContent = pct + '% completado';
+}
+
+/* ============================================================
+   ALMACENAMIENTO
+   localStorage cuando existe; si el navegador lo bloquea
+   (modo privado, iframe restringido), caemos a memoria y avisamos.
+   ============================================================ */
+const KEY_CRIPTO = 'pododepor_cripto_v1';
+
+/* ---------- Capa de disco (texto tal cual, ya venga cifrado o no) ---------- */
+const Disco = (() => {
+  let disponible = true;
+  const memoria = {};
+  try {
+    const t = '__pd_test__';
+    localStorage.setItem(t, '1'); localStorage.removeItem(t);
+  } catch (e) { disponible = false; }
+  return {
+    disponible: () => disponible,
+    getRaw(k) { try { return disponible ? localStorage.getItem(k) : (memoria[k] || null); } catch (e) { return null; } },
+    setRaw(k, raw) {
+      try { if (disponible) localStorage.setItem(k, raw); else memoria[k] = raw; return true; }
+      catch (e) { memoria[k] = raw; return false; }
+    },
+    del(k) { try { if (disponible) localStorage.removeItem(k); else delete memoria[k]; } catch (e) {} },
+  };
+})();
+
+/* ============================================================
+   CIFRADO · AES-256-GCM con clave derivada de la contraseña (PBKDF2)
+   La contraseña NO se guarda en ningún sitio: sin ella los datos
+   son irrecuperables, ni por mí ni por nadie. Esa es la idea.
+   ============================================================ */
+const Cripto = (() => {
+  // 600.000 iteraciones = recomendación OWASP para PBKDF2-SHA256. Tarda ~0,2 s en
+  // desbloquear, y multiplica por ese coste cada intento de quien pruebe a fuerza bruta.
+  const ITERACIONES = 600000;
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  let clave = null;
+  let saltActual = null;   // en base64, el mismo con el que se derivó la clave abierta
+
+  const soportado = () => !!(window.crypto && window.crypto.subtle && window.isSecureContext);
+  const b64 = buf => btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
+  const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+  // Las iteraciones se leen de lo guardado, no de la constante: así, si algún día
+  // sube el número, los datos cifrados con el valor antiguo se siguen abriendo.
+  async function derivar(pass, salt, iteraciones) {
+    const base = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: iteraciones || ITERACIONES, hash: 'SHA-256' },
+      base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    );
+  }
+
+  async function cifrarCon(k, texto) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, enc.encode(texto));
+    return { iv: b64(iv), ct: b64(ct) };
+  }
+
+  async function descifrarCon(k, paquete) {
+    const claro = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: unb64(paquete.iv) }, k, unb64(paquete.ct)
+    );
+    return dec.decode(claro);
+  }
+
+  return {
+    soportado,
+    hayContrasena: () => !!Disco.getRaw(KEY_CRIPTO),
+    desbloqueada: () => !!clave,
+    bloquear() { clave = null; },
+
+    // Primera vez: crea salt, deriva clave y guarda un verificador cifrado.
+    async crear(pass) {
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const k = await derivar(pass, salt);
+      const verificador = await cifrarCon(k, 'pododepor-ok');
+      Disco.setRaw(KEY_CRIPTO, JSON.stringify({ salt: b64(salt), verificador, iteraciones: ITERACIONES }));
+      clave = k;
+      saltActual = b64(salt);
+    },
+
+    // Devuelve true solo si la contraseña abre el verificador.
+    async abrir(pass) {
+      const cfg = JSON.parse(Disco.getRaw(KEY_CRIPTO));
+      const k = await derivar(pass, unb64(cfg.salt), cfg.iteraciones);
+      try {
+        const v = await descifrarCon(k, cfg.verificador);
+        if (v !== 'pododepor-ok') return false;
+        clave = k;
+        saltActual = cfg.salt;
+        return true;
+      } catch (e) { return false; }   // GCM falla al autenticar = contraseña incorrecta
+    },
+
+    async cifrar(obj) { return JSON.stringify(await cifrarCon(clave, JSON.stringify(obj))); },
+    async descifrar(raw) { return JSON.parse(await descifrarCon(clave, JSON.parse(raw))); },
+
+    // Copia de seguridad: lleva su propio salt para poder restaurarla en otro iPad.
+    async exportar(obj) {
+      const p = await cifrarCon(clave, JSON.stringify(obj));
+      return { salt: saltActual, iv: p.iv, ct: p.ct, iteraciones: ITERACIONES };
+    },
+    // Prueba con la clave abierta; si el archivo venía de otra contraseña, la pide.
+    async importar(paquete, pass) {
+      const k = pass ? await derivar(pass, unb64(paquete.salt), paquete.iteraciones) : clave;
+      return JSON.parse(await descifrarCon(k, paquete));
+    },
+    async recifrarTodo(passNueva) {
+      const hist = getHist(), borrador = borradorMem;
+      await this.crear(passNueva);
+      await persistir(KEY_HIST, hist);
+      if (borrador) await persistir(KEY_DRAFT, borrador);
+    },
+  };
+})();
+
+/* ---------- Caché en memoria: mantiene síncrono el resto de la app ---------- */
+let histMem = [];
+let borradorMem = null;
+let colaEscritura = Promise.resolve();
+
+// Serializamos las escrituras: dos cifrados a la vez sobre la misma clave se pisarían.
+function persistir(k, valor) {
+  colaEscritura = colaEscritura.then(async () => {
+    if (!Cripto.desbloqueada()) return;   // bloqueada: no hay clave con la que cifrar
+    try { Disco.setRaw(k, await Cripto.cifrar(valor)); }
+    catch (e) {
+      console.warn('No se pudo cifrar', k, e);
+      marcarEstado('⚠ No se pudo guardar · copia los datos', 'off');
+    }
+  });
+  return colaEscritura;
+}
+
+async function cargarDescifrado() {
+  const leer = async (k, def) => {
+    const raw = Disco.getRaw(k);
+    if (!raw) return def;
+    try { return await Cripto.descifrar(raw); } catch (e) { return def; }
+  };
+  histMem = await leer(KEY_HIST, []);
+  borradorMem = await leer(KEY_DRAFT, null);
+}
+
+const Store = {
+  disponible: () => Disco.disponible(),
+  get(k, def) {
+    if (k === KEY_HIST) return histMem;
+    if (k === KEY_DRAFT) return borradorMem;
+    return def;
+  },
+  set(k, v) {
+    if (k === KEY_HIST) histMem = v;
+    if (k === KEY_DRAFT) borradorMem = v;
+    persistir(k, v);
+    return true;
+  },
+  del(k) {
+    if (k === KEY_HIST) histMem = [];
+    if (k === KEY_DRAFT) borradorMem = null;
+    Disco.del(k);
+  },
+};
+
+/* ---------- Snapshot / restauración ---------- */
+function leerFormulario() {
+  const datos = {};
+  todosLosCampos().forEach(el => {
+    datos[el.id] = (el.type === 'checkbox') ? el.checked : el.value;
+  });
+  return datos;
+}
+
+function escribirFormulario(datos) {
+  todosLosCampos().forEach(el => {
+    if (!(el.id in datos)) return;
+    if (el.type === 'checkbox') el.checked = !!datos[el.id];
+    else el.value = datos[el.id] == null ? '' : datos[el.id];
+  });
+  aplicarPerfil(); calcFPI(); calcIMC(); calcDismetria(); actualizarUI();
+}
+
+function limpiarFormulario() {
+  todosLosCampos().forEach(el => {
+    if (el.type === 'checkbox') el.checked = false; else el.value = '';
+  });
+  $('p_fecha').valueAsDate = new Date();
+  $('p_etapa').value = 'adulto';
+  $('p_actividad').value = 'no_dep';
+  $('cie_salida').selectedIndex = 0;
+  document.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+  aplicarPerfil(); calcFPI(); calcIMC(); calcDismetria(); actualizarUI();
+}
+
+/* ---------- Autoguardado del borrador ---------- */
+let fichaActualId = null;   // id de historial si la ficha viene de una guardada
+let saveTimer = null;
+
+function marcarEstado(txt, clase) {
+  $('saveTxt').textContent = txt;
+  const dot = $('saveDot');
+  dot.className = 'dot' + (clase ? ' ' + clase : '');
+}
+
+function guardarBorrador() {
+  const ok = Store.set(KEY_DRAFT, { datos: leerFormulario(), id: fichaActualId, ts: Date.now() });
+  const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  if (!Store.disponible()) marcarEstado('Sin guardado permanente (solo memoria)', 'off');
+  else if (ok) marcarEstado('Borrador guardado · ' + hora, '');
+  else marcarEstado('No se pudo guardar (memoria llena)', 'off');
+}
+
+function programarAutoguardado() {
+  marcarEstado('Guardando…', 'saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(guardarBorrador, 700);
+}
+
+function restaurarBorrador() {
+  const b = Store.get(KEY_DRAFT, null);
+  if (!b || !b.datos) return false;
+  const vacio = Object.values(b.datos).every(v => v === '' || v === false);
+  if (vacio) return false;
+  escribirFormulario(b.datos);
+  fichaActualId = b.id || null;
+  const cuando = new Date(b.ts).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  marcarEstado('Borrador recuperado · ' + cuando, '');
+  return true;
+}
+
+/* ============================================================
+   HISTORIAL
+   ============================================================ */
+const getHist = () => Store.get(KEY_HIST, []);
+const setHist = h => Store.set(KEY_HIST, h);
+
+function validar(silencioso) {
+  const faltan = [];
+  [['p_historia', 'Nº de historia clínica'], ['p_fecha', 'Fecha de exploración']].forEach(([id, nombre]) => {
+    const el = $(id);
+    if (!g(id)) { faltan.push(nombre); if (!silencioso) el.classList.add('invalid'); }
+    else el.classList.remove('invalid');
+  });
+  if (faltan.length && !silencioso) {
+    abrirSeccion('sec1');
+    toast('Falta: ' + faltan.join(' y '), 'err');
+    setTimeout(() => $(faltan[0] === 'Nº de historia clínica' ? 'p_historia' : 'p_fecha').focus(), 350);
+  }
+  return faltan.length === 0;
+}
+
+function resumenFicha() {
+  const fpiD = $('fpi_total_d').textContent, fpiI = $('fpi_total_i').textContent;
+  const tags = [];
+  const act = { no_dep: 'No deportista', dep_gen: 'Deportista', corredor: 'Corredor' }[g('p_actividad')];
+  if (act) tags.push(act);
+  if (fpiD !== '–' || fpiI !== '–') tags.push(`FPI D${fpiD}/I${fpiI}`);
+  if (g('cie_imp')) tags.push('Con impresión');
+  return tags;
+}
+
+function guardarEnHistorial() {
+  if (!validar(false)) return;
+  const hist = getHist();
+  const registro = {
+    id: fichaActualId || ('f_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
+    historia: g('p_historia'),
+    fecha: g('p_fecha'),
+    edad: g('p_edad'),
+    actividad: g('p_actividad'),
+    impresion: g('cie_imp'),
+    dolor: g('p_dolor'),
+    tags: resumenFicha(),
+    datos: leerFormulario(),
+    creado: Date.now(),
+  };
+  const i = hist.findIndex(f => f.id === registro.id);
+  if (i >= 0) {
+    registro.creado = hist[i].creado;
+    registro.actualizado = Date.now();
+    hist[i] = registro;
+    toast('✓ Ficha actualizada en el historial');
+  } else {
+    hist.unshift(registro);
+    toast('✓ Ficha guardada en el historial');
+  }
+  fichaActualId = registro.id;
+  if (!setHist(hist)) toast('Guardado en memoria: el almacenamiento está lleno', 'err');
+  guardarBorrador();
+  renderHistorial();
+}
+
+function cargarFicha(id, comoPlantilla) {
+  const f = getHist().find(x => x.id === id);
+  if (!f) return;
+  const aviso = comoPlantilla
+    ? `¿Usar la ficha HC ${f.historia} (${f.fecha}) como plantilla?\n\nSe copian los datos de exploración en una ficha NUEVA, con la fecha de hoy y sin cierre clínico.`
+    : `¿Abrir la ficha HC ${f.historia} (${f.fecha})?\n\nSe reemplaza lo que tengas ahora en pantalla.`;
+  if (!confirm(aviso)) return;
+
+  escribirFormulario(f.datos);
+  if (comoPlantilla) {
+    // Plantilla = misma anatomía, consulta nueva: se limpia todo lo que es de esta visita concreta.
+    ['cie_imp','cie_trat','cie_revision','cie_obs','p_dolor','np_notas'].forEach(id => { if ($(id)) $(id).value = ''; });
+    ['np_est','np_85','np_din','np_ort'].forEach(id => { if ($(id)) $(id).checked = false; });
+    $('p_fecha').valueAsDate = new Date();
+    fichaActualId = null;
+    toast('Plantilla cargada · ficha nueva sin guardar');
+  } else {
+    fichaActualId = f.id;
+    toast('Ficha HC ' + f.historia + ' cargada');
+  }
+  aplicarPerfil(); calcFPI(); calcIMC(); calcDismetria(); actualizarUI();
+  guardarBorrador();
+  cerrarModal('modalHist');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function borrarFicha(id) {
+  const f = getHist().find(x => x.id === id);
+  if (!f) return;
+  if (!confirm(`¿Borrar definitivamente la ficha HC ${f.historia} (${f.fecha})?\n\nEsta acción no se puede deshacer.`)) return;
+  setHist(getHist().filter(x => x.id !== id));
+  if (fichaActualId === id) fichaActualId = null;
+  toast('Ficha borrada', 'info');
+  renderHistorial();
+}
+
+function fechaBonita(iso) {
+  if (!iso) return '–';
+  const [a, m, d] = iso.split('-');
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${d} ${meses[parseInt(m, 10) - 1]} ${a}`;
+}
+
+function renderHistorial() {
+  const q = ($('histSearch').value || '').toLowerCase().trim();
+  const hist = getHist();
+  const lista = hist.filter(f => !q ||
+    (f.historia || '').toLowerCase().includes(q) ||
+    (f.fecha || '').includes(q) ||
+    fechaBonita(f.fecha).toLowerCase().includes(q) ||
+    (f.impresion || '').toLowerCase().includes(q) ||
+    (f.dolor || '').toLowerCase().includes(q));
+
+  $('histSub').textContent = hist.length === 0 ? 'Todavía no hay fichas guardadas'
+    : `${hist.length} ficha${hist.length > 1 ? 's' : ''} en este dispositivo${q ? ` · ${lista.length} coinciden` : ''}`;
+
+  const cont = $('histList');
+  if (!lista.length) {
+    cont.innerHTML = hist.length
+      ? `<div class="empty"><div class="big">🔍</div>Ninguna ficha coincide con "<strong>${esc(q)}</strong>".</div>`
+      : `<div class="empty"><div class="big">🗂</div>Aún no has guardado ninguna ficha.<br>Rellena una y pulsa <strong>Guardar ficha</strong>.</div>`;
+    return;
+  }
+
+  cont.innerHTML = lista.map(f => {
+    const hc = esc(f.historia || '??');
+    // En el avatar caben pocas cifras: mostramos la cola, que es la que distingue historias correlativas.
+    const corto = hc.length > 4 ? '…' + hc.slice(-4) : hc;
+    const sub = [fechaBonita(f.fecha), f.edad ? f.edad + ' años' : '', f.impresion || f.dolor || '']
+      .filter(Boolean).join(' · ');
+    const tags = (f.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('');
+    const actual = f.id === fichaActualId ? '<span class="tag ok">Abierta</span>' : '';
+    return `<div class="hist-item">
+      <div class="hist-avatar">${corto}</div>
+      <div class="hist-info">
+        <div class="h1l">HC ${hc}</div>
+        <div class="h2l">${esc(sub)}</div>
+        <div class="hist-tags">${actual}${tags}</div>
+      </div>
+      <div class="hist-btns">
+        <button class="hist-btn load" onclick="cargarFicha('${f.id}', false)">Abrir</button>
+        <button class="hist-btn" onclick="cargarFicha('${f.id}', true)">Plantilla</button>
+        <button class="hist-btn del" onclick="borrarFicha('${f.id}')">Borrar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirHistorial() { $('modalHist').classList.add('show'); renderHistorial(); }
+function cerrarModal(id) { $(id).classList.remove('show'); }
+
+function nuevaFicha() {
+  const hayDatos = Object.values(leerFormulario()).some(v => v !== '' && v !== false);
+  if (hayDatos) {
+    const guardada = fichaActualId && getHist().some(f => f.id === fichaActualId);
+    const msg = guardada
+      ? '¿Empezar una ficha nueva?\n\nLa ficha actual ya está en el historial; se cerrará y se vaciará la pantalla.'
+      : '¿Empezar una ficha nueva?\n\n⚠ La ficha actual NO está guardada en el historial y se perderá.';
+    if (!confirm(msg)) return;
+  }
+  fichaActualId = null;
+  limpiarFormulario();
+  Store.del(KEY_DRAFT);
+  marcarEstado('Borrador nuevo', '');
+  toast('Ficha nueva lista', 'info');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---------- Exportar / importar copia de seguridad ---------- */
+async function exportarJSON() {
+  const hist = getHist();
+  if (!hist.length) { toast('No hay fichas que exportar', 'err'); return; }
+
+  toast('Cifrando copia…', 'info');
+  let paquete;
+  try {
+    // La copia va cifrada con tu misma contraseña: así puede guardarse en la nube
+    // sin que contenga datos de salud legibles.
+    paquete = await Cripto.exportar(hist);
+  } catch (e) { toast('No se pudo cifrar la copia', 'err'); return; }
+
+  const blob = new Blob([JSON.stringify({ app: 'pododepor', version: 6, cifrado: true, exportado: new Date().toISOString(), fichas: paquete }, null, 2)],
+    { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pododepor_fichas_${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`✓ ${hist.length} ficha(s) exportadas`);
+}
+
+function importarJSON(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      let entrantes;
+
+      if (data.cifrado && data.fichas && data.fichas.ct) {
+        try {
+          entrantes = await Cripto.importar(data.fichas);          // misma contraseña
+        } catch (err) {
+          const pass = prompt('Esta copia se cifró con otra contraseña.\nEscribe la contraseña con la que se guardó:');
+          if (!pass) { toast('Importación cancelada', 'info'); return; }
+          try { entrantes = await Cripto.importar(data.fichas, pass); }
+          catch (err2) { toast('Contraseña incorrecta para esa copia', 'err'); return; }
+        }
+      } else {
+        entrantes = Array.isArray(data) ? data : data.fichas;      // copias antiguas sin cifrar
+      }
+
+      if (!Array.isArray(entrantes)) throw new Error('formato');
+      const hist = getHist();
+      const ids = new Set(hist.map(f => f.id));
+      // Fusionamos: las fichas ya presentes se respetan, no se sobrescriben.
+      const nuevas = entrantes.filter(f => f && f.id && f.datos && !ids.has(f.id));
+      setHist(nuevas.concat(hist));
+      renderHistorial();
+      toast(nuevas.length ? `✓ ${nuevas.length} ficha(s) importadas` : 'Ninguna ficha nueva que importar', nuevas.length ? '' : 'info');
+    } catch (err) {
+      toast('Archivo no válido', 'err');
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+
+/* ============================================================
+   BLOQUEO / DESBLOQUEO
+   ============================================================ */
+const MINUTOS_INACTIVIDAD = 10;
+let timerInactividad = null;
+let momentoOculta = 0;
+
+function fuerzaContrasena(p) {
+  let f = 0;
+  if (p.length >= 8) f++;
+  if (p.length >= 12) f++;
+  if (/[A-Z]/.test(p) && /[a-z]/.test(p)) f++;
+  if (/[0-9]/.test(p)) f++;
+  if (/[^A-Za-z0-9]/.test(p)) f++;
+  return Math.min(f, 4);
+}
+
+function pintarFuerza() {
+  const p = $('lockPass').value;
+  const f = fuerzaContrasena(p);
+  const barra = $('lockFuerza');
+  const colores = ['#FC8181', '#F6AD55', '#F6E05E', '#68D391', '#38A169'];
+  barra.style.width = (p ? (f + 1) * 20 : 0) + '%';
+  barra.style.background = colores[f];
+}
+
+function lockError(msg) {
+  const e = $('lockErr');
+  e.textContent = msg;
+  e.classList.add('show');
+}
+
+function pintarPantallaBloqueo() {
+  const primeraVez = !Cripto.hayContrasena();
+  $('lockErr').classList.remove('show');
+  $('lockPass').value = ''; $('lockPass2').value = '';
+
+  if (!Cripto.soportado()) {
+    $('lockTitulo').textContent = 'No se puede cifrar aquí';
+    $('lockSub').innerHTML = 'Este navegador no permite cifrar los datos.<br>Abre la ficha desde su dirección <strong>https://</strong> (no desde el archivo suelto).';
+    $('lockForm').style.display = 'none';
+    return;
+  }
+
+  if (primeraVez) {
+    $('lockTitulo').textContent = 'Crea tu contraseña';
+    $('lockSub').textContent = 'Cifrará el historial de fichas en este dispositivo.';
+    $('lockPass').placeholder = 'Contraseña nueva';
+    $('lockPass').setAttribute('autocomplete', 'new-password');
+    $('lockPass2').style.display = 'block';
+    $('lockFuerzaBar').style.display = 'block';
+    $('lockBtn').textContent = 'Crear y entrar';
+    const aviso = $('lockAviso');
+    aviso.innerHTML = '<strong>⚠ Apúntala en lugar seguro.</strong> No hay forma de recuperarla: si la olvidas, las fichas guardadas se pierden para siempre. Ni yo ni nadie puede abrirlas sin ella.';
+    aviso.style.display = 'block';
+  } else {
+    $('lockTitulo').textContent = 'Ficha Pododepor';
+    $('lockSub').textContent = 'Introduce tu contraseña para abrir el historial.';
+    $('lockPass').placeholder = 'Contraseña';
+    $('lockPass').setAttribute('autocomplete', 'current-password');
+    $('lockPass2').style.display = 'none';
+    $('lockFuerzaBar').style.display = 'none';
+    $('lockBtn').textContent = 'Abrir';
+    $('lockAviso').style.display = 'none';
+  }
+}
+
+async function intentarDesbloquear() {
+  const pass = $('lockPass').value;
+  const btn = $('lockBtn');
+  if (!pass) { lockError('Escribe la contraseña.'); return; }
+
+  const primeraVez = !Cripto.hayContrasena();
+  if (primeraVez) {
+    if (pass.length < 8) { lockError('Usa al menos 8 caracteres.'); return; }
+    if (pass !== $('lockPass2').value) { lockError('Las dos contraseñas no coinciden.'); return; }
+  }
+
+  // Derivar la clave tarda ~1 s a propósito: es lo que frena a quien pruebe contraseñas a lo bruto.
+  btn.disabled = true;
+  btn.textContent = 'Abriendo…';
+  await new Promise(r => setTimeout(r, 30));
+
+  try {
+    if (primeraVez) {
+      await Cripto.crear(pass);
+    } else {
+      const ok = await Cripto.abrir(pass);
+      if (!ok) {
+        btn.disabled = false;
+        btn.textContent = 'Abrir';
+        lockError('Contraseña incorrecta.');
+        $('lockPass').value = '';
+        $('lockPass').focus();
+        return;
+      }
+    }
+    await cargarDescifrado();
+    $('lockScreen').classList.add('hidden');
+    $('lockPass').value = ''; $('lockPass2').value = '';
+    btn.disabled = false;
+    arrancarFicha(primeraVez);
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Abrir';
+    lockError('Error al abrir: ' + e.message);
+  }
+}
+
+async function bloquear(motivo) {
+  clearTimeout(timerInactividad);
+  clearTimeout(saveTimer);
+
+  // 1) Tapar la pantalla primero: los datos del paciente dejan de verse ya.
+  document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show'));
+  pintarPantallaBloqueo();
+  $('lockScreen').classList.remove('hidden');
+  $('lockSub').textContent = (motivo === 'manual')
+    ? 'Bloqueada. Tu ficha sigue guardada.'
+    : 'Bloqueada por inactividad. Tu ficha sigue guardada.';
+
+  // 2) Terminar de cifrar lo pendiente ANTES de soltar la clave. Si se borra
+  //    antes, el cifrado en cola se queda sin clave y esa ficha no llega al disco.
+  guardarBorrador();
+  try { await colaEscritura; } catch (e) { /* nada que hacer: ya está tapado */ }
+
+  // 3) Ahora sí: fuera clave y fuera datos de la memoria.
+  Cripto.bloquear();
+  histMem = [];
+  borradorMem = null;
+  setTimeout(() => $('lockPass').focus(), 200);
+}
+
+function reiniciarInactividad() {
+  clearTimeout(timerInactividad);
+  if (!Cripto.desbloqueada()) return;
+  timerInactividad = setTimeout(bloquear, MINUTOS_INACTIVIDAD * 60 * 1000);
+}
+
+async function cambiarContrasena() {
+  const actual = prompt('Para cambiar la contraseña, escribe primero la ACTUAL:');
+  if (!actual) return;
+  if (!(await Cripto.abrir(actual))) { toast('Contraseña actual incorrecta', 'err'); return; }
+  const nueva = prompt('Escribe la contraseña NUEVA (mínimo 8 caracteres):');
+  if (!nueva) return;
+  if (nueva.length < 8) { toast('Debe tener al menos 8 caracteres', 'err'); return; }
+  if (nueva !== prompt('Repite la contraseña NUEVA:')) { toast('No coinciden', 'err'); return; }
+  toast('Recifrando…', 'info');
+  await Cripto.recifrarTodo(nueva);
+  toast('✓ Contraseña cambiada · apúntala');
+}
+
+/* ---------- Toast ---------- */
+let toastTimer = null;
+function toast(msg, tipo) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (tipo ? ' ' + tipo : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ============================================================
+   GENERADOR DE TEXTO PARA CLAUDE
+   El formato de cabeceras (## 1. PACIENTE, etc.) lo consume la
+   skill `informe-biomecanico-pie`: no cambiar sin actualizarla.
+   ============================================================ */
+function generarTexto() {
+  const par = (label, idD, idI) => `${label}: D ${g(idD) || '–'} / I ${g(idI) || '–'}`;
+
+  // FPI
+  const fpiItems = ['Cabeza astrágalo','Curvatura maleolar','Calcáneo','Talonavicular','ALM','Abducción antepié'];
+  const fpiLineas = [];
+  for (let i = 1; i <= 6; i++) {
+    const vd = g(`fpi_d_${i}`), vi = g(`fpi_i_${i}`);
+    if (vd !== '' || vi !== '') fpiLineas.push(`  ${fpiItems[i-1]}: D ${vd !== '' ? vd : '–'} / I ${vi !== '' ? vi : '–'}`);
+  }
+  const fpiTotalD = $('fpi_total_d').textContent;
+  const fpiTotalI = $('fpi_total_i').textContent;
+  const fpiCat = id => { const b = $(id).querySelector('.fpi-badge'); return b ? b.textContent : '–'; };
+
+  // Muscular / articular: solo los grupos con algún valor
+  const muLineas = MUSCULOS.filter(([, id]) => g(id + '_d') || g(id + '_i'))
+    .map(([n, id]) => `  ${n}: D ${g(id + '_d') || '–'} / I ${g(id + '_i') || '–'}`);
+  const artLineas = ART_LABELS.filter(([, id]) => g(id + '_d') || g(id + '_i'))
+    .map(([n, id]) => `  ${n}: D ${g(id + '_d') || '–'} / I ${g(id + '_i') || '–'}`);
+
+  // NeoPlate
+  const npCaps = [];
+  if (gc('np_est')) npCaps.push('Estática habitual');
+  if (gc('np_85')) npCaps.push('Norma 85');
+  if (gc('np_din')) npCaps.push('Dinámica');
+  if (gc('np_ort')) npCaps.push('Con ortesis');
+
+  // Rockers / carrera: solo lo alterado
+  const linea = (label, idI, idD) => {
+    const vi = gR(idI), vd = gR(idD);
+    if (!vi && !vd) return '';
+    return `    ${label}: I ${vi || 'N'} / D ${vd || 'N'}`;
+  };
+  const bloque = (filas, vacio) => filas.filter(Boolean).join('\n') || vacio;
+
+  const rocker1 = bloque([
+    linea('Ángulo progresión','r1_apg_i','r1_apg_d'),
+    linea('Extensión rodilla','r1_ext_rod_i','r1_ext_rod_d'),
+    linea('Apoyo supinación','r1_sup_i','r1_sup_d'),
+    linea('Sustitución extensora','r1_sust_i','r1_sust_d'),
+  ], '    Sin alteraciones');
+  const rocker2 = bloque([
+    linea('Ángulo progresión','r2_apg_i','r2_apg_d'),
+    linea('Flexión rodilla','r2_flex_rod_i','r2_flex_rod_d'),
+    linea('Elevación precoz calcáneo','r2_elev_i','r2_elev_d'),
+    linea('Pronación','r2_pron_i','r2_pron_d'),
+    linea('Traslado 5º→1º MettF','r2_traslado_i','r2_traslado_d'),
+  ], '    Sin alteraciones');
+  const rocker3 = bloque([
+    linea('Ángulo progresión','r3_apg_i','r3_apg_d'),
+    linea('Apoyo 1º metatarsiano','r3_m1_i','r3_m1_d'),
+    linea('Extensión 1ª MettF','r3_mtf_i','r3_mtf_d'),
+    linea('Despegue columna','r3_desp_i','r3_desp_d'),
+  ], '    Sin alteraciones');
+  const rockerV = bloque([
+    linea('Ángulo progresión','rv_apg_i','rv_apg_d'),
+    linea('Sustitución extensora','rv_sust_i','rv_sust_d'),
+  ], '    Sin alteraciones');
+  const carSag = bloque([
+    linea('Contacto inicial – tipo apoyo','cs_ci_i','cs_ci_d'),
+    linea('Máx absorción – flexión rodilla','cs_ma_rod_i','cs_ma_rod_d'),
+    linea('Propulsión – extensión cadera','cs_p_cad_i','cs_p_cad_d'),
+    linea('Propulsión – extensión rodilla','cs_p_rod_i','cs_p_rod_d'),
+    linea('Propulsión – flex-ext 1ª MettF','cs_p_mtf_i','cs_p_mtf_d'),
+  ], '    Valores normales');
+  const carFront = bloque([
+    linea('Contacto – alineación MMII','cf_ci_ali_i','cf_ci_ali_d'),
+    linea('Contacto – base apoyo','cf_ci_base_i','cf_ci_base_d'),
+    linea('Máx absorción – valgo rodilla','cf_ma_valgo_i','cf_ma_valgo_d'),
+    linea('Máx absorción – caída pélvica','cf_ma_pelvis_i','cf_ma_pelvis_d'),
+    linea('Máx absorción – pronación','cf_ma_pron_i','cf_ma_pron_d'),
+    linea('Propulsión – despegue columna','cf_p_desp_i','cf_p_desp_d'),
+    linea('Propulsión – alineación','cf_p_alin_i','cf_p_alin_d'),
+  ], '    Valores normales');
+
+  // Dismetría
+  const dimTxt = (() => {
+    const v1 = g('dim_1a'), cm1 = g('dim_1a_cm'), v2 = g('dim_2a'), cm2 = g('dim_2a_cm');
+    if (!v1 && !v2) return '1ª medición: simétrico / sin dismetría';
+    let t = v1 ? `1ª medición: ${v1}${cm1 ? ' (' + cm1 + ' cm)' : ''}` : '1ª medición: –';
+    if (v2) t += `\n2ª medición (tras maniobra): ${v2}${cm2 ? ' (' + cm2 + ' cm)' : ''}`;
+    return t;
+  })();
+
+  const imc = (() => {
+    const p = parseFloat(g('p_peso')), t = parseFloat(g('p_talla'));
+    return (p && t) ? (p / Math.pow(t / 100, 2)).toFixed(1) : null;
+  })();
+
+  // La etiqueta del select ya trae su propio rango entre paréntesis: el valor medido va detrás con separador.
+  const lunge = (idSel, idCm) => {
+    const sel = g(idSel), cm = g(idCm);
+    if (!sel && !cm) return '–';
+    if (!sel) return `${cm} cm`;
+    return sel + (cm ? ` · medido ${cm} cm` : '');
+  };
+  const esCorredor = g('p_actividad') === 'corredor';
+  const esDeportista = g('p_actividad') !== 'no_dep';
+
+  let texto = `# FICHA EXPLORACIÓN BIOMECÁNICA · PODODEPOR 2026
+
+## PERFIL
+Etapa vital: ${g('p_etapa') || 'adulto'} · Actividad: ${g('p_actividad') || 'no_dep'}
+
+## 1. PACIENTE
+Nº historia clínica: ${g('p_historia') || 'NR'} · Edad: ${g('p_edad') || 'NR'} · Sexo: ${g('p_sexo') || 'NR'}
+Peso: ${g('p_peso') || 'NR'} kg · Talla: ${g('p_talla') || 'NR'} cm${imc ? ` · IMC: ${imc} kg/m²` : ''} · Fecha: ${g('p_fecha') || 'NR'}
+Asintomático: ${g('p_asint') || 'NR'}
+Dolor / síntomas: ${g('p_dolor') || '–'}
+Actividad / deporte: ${g('p_deporte') || '–'}
+Objetivo: ${g('p_objetivo') || '–'}
+Competición / marcas: ${g('p_compite') || '–'}
+
+## 2. ANTECEDENTES
+Familiares: ${g('a_familiares') || '–'}
+Personales / médicos: ${g('a_personales') || '–'}
+Quirúrgicos: ${g('a_quirurgicos') || '–'}
+Lesiones deportivas: ${g('a_lesiones') || '–'}
+Podológicos previos: ${g('a_podologicos') || '–'}
+
+## 3. CALZADO
+Calle / diario: ${g('c_diario') || '–'}
+Trabajo: ${g('c_trabajo') || '–'}
+Rodaje / entrenamiento: ${g('c_rodaje') || '–'}
+Series: ${g('c_series') || '–'}
+Competición / placa: ${g('c_comp') || '–'}
+Desgaste: ${g('c_desgaste') || '–'}
+Plantillas actuales: ${g('c_plantillas') || '–'}${g('c_plant_notas') ? '\nNotas plantillas: ' + g('c_plant_notas') : ''}
+
+## 4. CAMILLA (solo alterado)
+HQP: ${g('cam_hqp') || '–'}
+${par('HAV', 'cam_hav_d', 'cam_hav_i')}
+${par('DORS M1', 'cam_dors_d', 'cam_dors_i')}
+${par('HLF', 'cam_hlf_d', 'cam_hlf_i')}
+${par('Antepié-retropié (Root)', 'cam_apia_d', 'cam_apia_i')}
+${par('AKE Test', 'cam_ake_d', 'cam_ake_i')}
+${par('Silverskiöld', 'cam_silv_d', 'cam_silv_i')}
+${par('Jack / Windlass', 'cam_jack_d', 'cam_jack_i')}
+${par('Lachman MTF', 'cam_lach_d', 'cam_lach_i')}
+${par('Kelikian', 'cam_keli_d', 'cam_keli_i')}${g('cam_otros') ? '\nOtros hallazgos: ' + g('cam_otros') : ''}
+
+### Dismetría MMII
+${dimTxt}
+
+## 5. FPI – FOOT POSTURE INDEX
+${fpiLineas.length ? fpiLineas.join('\n') : '  (no completado)'}
+  TOTAL: D ${fpiTotalD} [${fpiCat('fpi_badge_d')}] / I ${fpiTotalI} [${fpiCat('fpi_badge_i')}]
+
+## 6. BIPEDESTACIÓN Y TESTS EN CARGA
+Alineación corporal: ${g('bip_alin') || '–'}
+Retropié / Helbing: D ${g('bip_helb_d') || '–'}${g('bip_helb_gr_d') ? ' (' + g('bip_helb_gr_d') + ')' : ''} / I ${g('bip_helb_i') || '–'}${g('bip_helb_gr_i') ? ' (' + g('bip_helb_gr_i') + ')' : ''}
+${par('Arco ALM', 'bip_arco_d', 'bip_arco_i')}
+${par('Ángulo de Fick', 'bip_apg_d', 'bip_apg_i')}
+${par('EJEASA', 'bip_ejeasa_d', 'bip_ejeasa_i')}
+${par('Test Hintermann', 'bip_hinter_d', 'bip_hinter_i')}
+Lunge Test: D ${lunge('bip_lunge_d', 'bip_lunge_cm_d')} / I ${lunge('bip_lunge_i', 'bip_lunge_cm_i')}
+${par('Heel Rise Test', 'bip_heel_d', 'bip_heel_i')}
+${par('Máxima pronación', 'bip_maxpron_d', 'bip_maxpron_i')}
+${par('Resistencia a supinación', 'bip_ressup_d', 'bip_ressup_i')}
+${par('TCPAU', 'bip_tcpau_d', 'bip_tcpau_i')}
+${par('Single Leg Squat', 'bip_sls_d', 'bip_sls_i')}${g('bip_obs') ? '\nObservaciones: ' + g('bip_obs') : ''}
+
+## 7. VALORACIÓN MUSCULAR (Daniels 0–5)
+${muLineas.length ? muLineas.join('\n') : '  Sin alteraciones registradas'}${g('mu_obs') ? '\n  Obs: ' + g('mu_obs') : ''}
+
+## 8. VALORACIÓN ARTICULAR
+${artLineas.length ? artLineas.join('\n') : '  Sin alteraciones registradas'}${g('ar_obs') ? '\n  Obs: ' + g('ar_obs') : ''}
+
+## 9. PLATAFORMA NEOPLATE
+Capturas adjuntas: ${npCaps.length ? npCaps.join(' · ') : '–'}
+Reparto I/D: ${g('np_reparto_id') || '–'} · Antepié/Retropié: ${g('np_reparto_ar') || '–'}
+Centro de presiones: ${g('np_cdp') || '–'}
+Norma 85: ${g('np_n85') || '–'}${g('np_notas') ? '\nNotas: ' + g('np_notas') : ''}
+
+## 9B. MARCHA EN VÍDEO (Rockers · solo alterado)
+1º Rocker:
+${rocker1}${g('r1_obs') ? '\n  Obs: ' + g('r1_obs') : ''}
+2º Rocker:
+${rocker2}${g('r2_obs') ? '\n  Obs: ' + g('r2_obs') : ''}
+3º Rocker:
+${rocker3}${g('r3_obs') ? '\n  Obs: ' + g('r3_obs') : ''}
+Vuelo / Oscilación:
+${rockerV}${g('rv_obs') ? '\n  Obs: ' + g('rv_obs') : ''}
+`;
+
+  if (esDeportista) {
+    texto += `
+## 9C. CARRERA (solo alterado)
+Técnica: Contacto ${g('car_contacto') || '–'} · Zancada ${g('car_zancada') || '–'} · Superposición ${g('car_superp') || '–'} · Oscilación ${g('car_oscilacion') || '–'}
+Cadencia / velocidad: ${g('car_cadencia') || '–'}
+Zapatilla(s): ${g('car_zapatilla') || '–'}
+
+Plano Sagital:
+${carSag}${g('cs_osc_obs') ? '\n  Oscilación: ' + g('cs_osc_obs') : ''}
+
+Plano Frontal:
+${carFront}${g('cf_osc_obs') ? '\n  Oscilación: ' + g('cf_osc_obs') : ''}
+`;
+  } else {
+    texto += `
+## 9C. CARRERA
+No procede (paciente no deportista).
+`;
+  }
+
+  texto += `
+## 10. CIERRE CLÍNICO
+Impresión: ${g('cie_imp') || '–'}
+Tratamiento: ${g('cie_trat') || '–'}
+Próxima revisión: ${g('cie_revision') || '–'}
+Observaciones: ${g('cie_obs') || '–'}
+Salida: ${g('cie_salida') || 'DOCX Pododepor (informe completo)'}
+
+---
+> GENERA EL INFORME BIOMECÁNICO COMPLETO CON ESTOS DATOS.`;
+
+  if (npCaps.length) texto += `\n> Adjunto capturas NeoPlate (${npCaps.join(', ')}).`;
+  texto += '\n';
+  return texto;
+}
+
+function previsualizar() {
+  $('prevBox').textContent = generarTexto();
+  $('modalPrev').classList.add('show');
+}
+
+async function copiarParaClaude() {
+  if (!validar(false)) return;
+  const texto = generarTexto();
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(texto);
+      toast('✓ Copiado · pégalo en Claude');
+      return;
+    }
+  } catch (e) { /* seguimos con el método antiguo */ }
+  fallbackCopy(texto);
+}
+
+function fallbackCopy(texto) {
+  const ta = document.createElement('textarea');
+  ta.value = texto;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+  ta.setAttribute('readonly', '');
+  document.body.appendChild(ta);
+  ta.select();
+  ta.setSelectionRange(0, texto.length);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  if (ok) toast('✓ Copiado · pégalo en Claude');
+  else { previsualizar(); toast('Copia manual: selecciona el texto', 'err'); }
+}
+
+/* ============================================================
+   ARRANQUE
+   ============================================================ */
+function init() {
+  construirTablas();
+  pintarPantallaBloqueo();
+
+  $('lockForm').addEventListener('submit', e => { e.preventDefault(); intentarDesbloquear(); });
+  $('lockBtn').addEventListener('click', e => { e.preventDefault(); intentarDesbloquear(); });
+  $('lockPass').addEventListener('input', () => { $('lockErr').classList.remove('show'); pintarFuerza(); });
+  setTimeout(() => { if (Cripto.soportado()) $('lockPass').focus(); }, 300);
+
+  document.addEventListener('input', e => {
+    if (!e.target.closest('.container') || e.target.id === 'histSearch') return;
+    if (e.target.id === 'p_peso' || e.target.id === 'p_talla') calcIMC();
+    if (e.target.id === 'p_historia') aplicarPerfil();
+    if (e.target.classList.contains('invalid') && e.target.value) e.target.classList.remove('invalid');
+    actualizarUI();
+    programarAutoguardado();
+  });
+  document.addEventListener('change', e => {
+    if (!e.target.closest('.container') || e.target.id === 'histSearch') return;
+    actualizarUI();
+    programarAutoguardado();
+  });
+  // Un cierre accidental de pestaña no debe costar la exploración.
+  window.addEventListener('beforeunload', () => { clearTimeout(saveTimer); guardarBorrador(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show'));
+  });
+
+  // Auto-bloqueo: cualquier interacción reinicia la cuenta atrás.
+  ['click', 'input', 'change', 'touchstart', 'keydown'].forEach(ev =>
+    document.addEventListener(ev, reiniciarInactividad, { passive: true }));
+
+  // Al salir de la app (cambiar de app en el iPad) se bloquea si tarda en volver.
+  document.addEventListener('visibilitychange', () => {
+    if (!Cripto.desbloqueada()) return;
+    if (document.hidden) { momentoOculta = Date.now(); guardarBorrador(); }
+    else if (momentoOculta && Date.now() - momentoOculta > 5 * 60 * 1000) bloquear();
+    else reiniciarInactividad();
+  });
+}
+
+/* Se llama solo tras desbloquear: hasta aquí no se ha tocado ningún dato de paciente. */
+function arrancarFicha(esNueva) {
+  $('p_fecha').valueAsDate = new Date();
+  const recuperado = restaurarBorrador();
+  if (!recuperado) { aplicarPerfil(); calcFPI(); actualizarUI(); marcarEstado('Borrador nuevo', ''); }
+  if (!Store.disponible()) marcarEstado('⚠ Sin guardado permanente en este navegador', 'off');
+  reiniciarInactividad();
+  if (esNueva) toast('✓ Cifrado activado · no olvides tu contraseña');
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+
+/* ---------- Service worker: arranque instantáneo y uso sin conexión ---------- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      // Si hay versión nueva, avisamos en vez de recargar: recargar a media
+      // exploración con el paciente delante sería peor que esperar.
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+            toast('Hay una versión nueva · ciérrala y ábrela para aplicarla', 'info');
+          }
+        });
+      });
+    }).catch(() => { /* sin SW la ficha sigue funcionando, solo que sin offline */ });
+  });
+}
+</script>
+</body>
+</html>
