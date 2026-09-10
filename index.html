@@ -173,6 +173,7 @@
   .btn-gold { background: var(--gold); border-color: var(--gold); color: var(--navy); }
   .btn-wide { grid-column: 1 / -1; }
   .btn-danger { color: var(--danger); border-color: #FEB2B2; background: var(--danger-bg); }
+  .btn-safe { background: #E6FFFA; border-color: var(--ok); color: var(--ok); font-weight: 700; }
 
   /* TOAST / FAB */
   .toast { position: fixed; bottom: calc(84px + var(--safe-b)); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ok); color: white; padding: 12px 22px; border-radius: 30px; font-size: 14px; font-weight: 600; opacity: 0; transition: all 0.3s; z-index: 999; max-width: 90vw; text-align: center; pointer-events: none; box-shadow: 0 4px 18px rgba(0,0,0,0.25); }
@@ -983,14 +984,17 @@
   <div class="actions">
     <button class="btn btn-gold btn-wide" onclick="copiarParaClaude()">📋 Copiar para Claude</button>
     <button class="btn btn-primary" onclick="guardarEnHistorial()">💾 Guardar ficha</button>
+    <button class="btn btn-safe btn-wide" onclick="exportarJSON()">☁️ Guardar copia en Archivos / iCloud</button>
     <button class="btn" onclick="previsualizar()">👁 Previsualizar</button>
     <button class="btn" onclick="abrirHistorial()">🗂 Historial</button>
-    <button class="btn btn-danger" onclick="nuevaFicha()">↺ Nueva ficha</button>
+    <button class="btn btn-danger btn-wide" onclick="nuevaFicha()">↺ Nueva ficha</button>
   </div>
 
-  <p style="text-align:center;font-size:11px;color:var(--text-light);margin-top:16px;line-height:1.6;">
-    Los datos se guardan <strong>solo en este dispositivo</strong> (almacenamiento local del navegador).<br>
-    Historial <strong>cifrado</strong> con tu contraseña. Identifica las fichas por nº de historia clínica, nunca por nombre.
+  <p style="text-align:center;font-size:12px;color:var(--text-mid);margin-top:16px;line-height:1.6;background:var(--warn-bg);border:1px solid #F6E05E;border-radius:var(--radius);padding:12px 14px;">
+    ⚠ El historial vive en el <strong>almacenamiento del navegador</strong>, que el dispositivo puede vaciar.
+    Para no perder datos, pulsa <strong>☁️ Guardar copia en Archivos / iCloud</strong> al terminar cada paciente
+    (o varias veces al día): crea un archivo cifrado y duradero en tu iCloud.<br>
+    Historial <strong>cifrado</strong> con tu contraseña · fichas por nº de historia clínica, nunca por nombre.
   </p>
 
 </div>
@@ -1017,7 +1021,7 @@
       <div id="histList"></div>
     </div>
     <div class="modal-foot">
-      <button class="btn" onclick="exportarJSON()">⬇ Exportar copia</button>
+      <button class="btn" onclick="exportarJSON()">☁️ Guardar copia (Archivos/iCloud)</button>
       <button class="btn" onclick="document.getElementById('fileImport').click()">⬆ Importar copia</button>
       <button class="btn" onclick="cambiarContrasena()">🔑 Cambiar contraseña</button>
       <button class="btn" onclick="cerrarModal('modalHist'); bloquear('manual');">🔒 Bloquear ahora</button>
@@ -1480,11 +1484,14 @@ function marcarEstado(txt, clase) {
 }
 
 function guardarBorrador() {
+  invalidarCopia();   // los datos han cambiado: la copia preparada ya no vale
   const ok = Store.set(KEY_DRAFT, { datos: leerFormulario(), id: fichaActualId, ts: Date.now() });
+  const enHistorial = autoguardarEnHistorial();   // si hay nº de historia, entra sola en el historial
   const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   if (!Store.disponible()) marcarEstado('Sin guardado permanente (solo memoria)', 'off');
-  else if (ok) marcarEstado('Borrador guardado · ' + hora, '');
-  else marcarEstado('No se pudo guardar (memoria llena)', 'off');
+  else if (!ok) marcarEstado('No se pudo guardar (memoria llena)', 'off');
+  else if (enHistorial) marcarEstado('En el historial · ' + hora, '');
+  else marcarEstado('Borrador (falta nº de historia) · ' + hora, '');
 }
 
 function programarAutoguardado() {
@@ -1534,6 +1541,41 @@ function resumenFicha() {
   if (fpiD !== '–' || fpiI !== '–') tags.push(`FPI D${fpiD}/I${fpiI}`);
   if (g('cie_imp')) tags.push('Con impresión');
   return tags;
+}
+
+/* Guardado automático continuo: en cuanto hay nº de historia, la ficha entra
+   sola en el historial y se actualiza con cada cambio. Silencioso, sin validar
+   fecha (eso solo lo exige el guardado manual y el copiar). Evita depender de
+   que el usuario recuerde pulsar "Guardar ficha". Devuelve true si guardó. */
+function autoguardarEnHistorial() {
+  if (!Cripto.desbloqueada()) return false;
+  const hc = g('p_historia');
+  if (!hc) return false;                       // sin nº de historia no hay con qué identificarla
+  const hist = getHist();
+  const registro = {
+    id: fichaActualId || ('f_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
+    historia: hc,
+    fecha: g('p_fecha'),
+    edad: g('p_edad'),
+    actividad: g('p_actividad'),
+    impresion: g('cie_imp'),
+    dolor: g('p_dolor'),
+    tags: resumenFicha(),
+    datos: leerFormulario(),
+  };
+  const i = hist.findIndex(f => f.id === registro.id);
+  if (i >= 0) {
+    registro.creado = hist[i].creado;
+    registro.actualizado = Date.now();
+    hist[i] = registro;
+  } else {
+    registro.creado = Date.now();
+    registro.auto = true;                       // marca de que nació por autoguardado
+    hist.unshift(registro);
+  }
+  fichaActualId = registro.id;
+  setHist(hist);
+  return true;
 }
 
 function guardarEnHistorial() {
@@ -1675,28 +1717,80 @@ function nuevaFicha() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ---------- Exportar / importar copia de seguridad ---------- */
+/* ---------- Exportar / compartir copia de seguridad ---------- */
+// Guardamos aquí la última copia cifrada preparada, para que si iOS pide un
+// segundo toque (por caducar el "gesto" del usuario), no haya que recifrar.
+let copiaPreparada = null;
+
+function nombreCopia() {
+  const s = new Date().toISOString().slice(0, 16).replace('T', '_').replace(/:/g, '');
+  return `pododepor_fichas_${s}.json`;
+}
+
+async function prepararCopia() {
+  const hist = getHist();
+  if (!hist.length) return null;
+  // Copia cifrada con tu contraseña: se puede guardar en iCloud sin datos legibles.
+  const paquete = await Cripto.exportar(hist);
+  const contenido = JSON.stringify(
+    { app: 'pododepor', version: 6, cifrado: true, exportado: new Date().toISOString(), fichas: paquete },
+    null, 2);
+  return { contenido, nombre: nombreCopia(), n: hist.length };
+}
+
+// Botón principal: en iPad abre "Compartir → Guardar en Archivos/iCloud";
+// en ordenador descarga el archivo.
 async function exportarJSON() {
   const hist = getHist();
-  if (!hist.length) { toast('No hay fichas que exportar', 'err'); return; }
+  if (!hist.length) { toast('No hay fichas que guardar', 'err'); return; }
 
-  toast('Cifrando copia…', 'info');
-  let paquete;
-  try {
-    // La copia va cifrada con tu misma contraseña: así puede guardarse en la nube
-    // sin que contenga datos de salud legibles.
-    paquete = await Cripto.exportar(hist);
-  } catch (e) { toast('No se pudo cifrar la copia', 'err'); return; }
+  // Reutiliza la copia ya preparada si iOS nos hizo repetir el toque.
+  if (!copiaPreparada) {
+    toast('Preparando copia…', 'info');
+    try { copiaPreparada = await prepararCopia(); }
+    catch (e) { toast('No se pudo cifrar la copia', 'err'); return; }
+  }
+  const { contenido, nombre, n } = copiaPreparada;
+  const file = new File([contenido], nombre, { type: 'application/json' });
 
-  const blob = new Blob([JSON.stringify({ app: 'pododepor', version: 6, cifrado: true, exportado: new Date().toISOString(), fichas: paquete }, null, 2)],
-    { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+  // Vía iPad/iPhone: hoja del sistema → "Guardar en Archivos" (iCloud Drive).
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'Copia de fichas Pododepor' });
+      copiaPreparada = null;
+      toast('✓ Elige "Guardar en Archivos"');
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') { copiaPreparada = null; toast('Copia cancelada', 'info'); return; }
+      if (e && e.name === 'NotAllowedError') { toast('Pulsa otra vez "Copia a iCloud"', 'info'); return; }
+      // Otro error → seguimos al método de descarga.
+    }
+  }
+
+  // Ordenador / navegadores sin compartir archivos: descarga directa.
+  const url = URL.createObjectURL(new Blob([contenido], { type: 'application/json' }));
   const a = document.createElement('a');
-  a.href = url;
-  a.download = `pododepor_fichas_${new Date().toISOString().slice(0, 10)}.json`;
+  a.href = url; a.download = nombre;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  toast(`✓ ${hist.length} ficha(s) exportadas`);
+  copiaPreparada = null;
+  toast(`✓ ${n} ficha(s) en la copia`);
+}
+// Cualquier cambio invalida la copia preparada, para no compartir datos viejos.
+function invalidarCopia() { copiaPreparada = null; }
+
+/* Adapta una ficha de la versión anterior (identificada por iniciales) al formato
+   nuevo (nº de historia). Conserva las iniciales en el campo de historia para no
+   perder la referencia del paciente; el usuario puede sustituirlas luego por el
+   número real. Solo actúa si la ficha trae iniciales y aún no tiene nº de historia. */
+function migrarFichaAntigua(f) {
+  const tieneIni = f.iniciales && !f.historia;
+  if (tieneIni) f.historia = f.iniciales;
+  if (f.datos && f.datos.p_iniciales != null && !f.datos.p_historia) {
+    f.datos.p_historia = f.datos.p_iniciales;
+  }
+  f._migrada = !!tieneIni;
+  return f;
 }
 
 function importarJSON(ev) {
@@ -1725,10 +1819,13 @@ function importarJSON(ev) {
       const hist = getHist();
       const ids = new Set(hist.map(f => f.id));
       // Fusionamos: las fichas ya presentes se respetan, no se sobrescriben.
-      const nuevas = entrantes.filter(f => f && f.id && f.datos && !ids.has(f.id));
+      const nuevas = entrantes.filter(f => f && f.id && f.datos && !ids.has(f.id)).map(migrarFichaAntigua);
+      const conIniciales = nuevas.filter(f => f._migrada).length;
       setHist(nuevas.concat(hist));
       renderHistorial();
-      toast(nuevas.length ? `✓ ${nuevas.length} ficha(s) importadas` : 'Ninguna ficha nueva que importar', nuevas.length ? '' : 'info');
+      let msg = nuevas.length ? `✓ ${nuevas.length} ficha(s) importadas` : 'Ninguna ficha nueva que importar';
+      if (conIniciales) msg += ` · ${conIniciales} con iniciales antiguas en el nº de historia`;
+      toast(msg, nuevas.length ? '' : 'info');
     } catch (err) {
       toast('Archivo no válido', 'err');
     }
