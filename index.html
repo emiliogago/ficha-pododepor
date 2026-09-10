@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ficha Pododepor">
@@ -420,8 +421,8 @@
         <div class="field">
           <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
           <div class="grid-di">
-            <select id="cam_apia_d"><option value="">–</option><option>Neutro</option><option>Antepié varo estructural leve</option><option>Antepié varo estructural moderado</option><option>Antepié varo estructural severo</option><option>Antepié varo pronado (músculo-ligamentoso)</option><option>Antepié valgo estructural</option><option>Antepié valgo supinado (músculo-ligamentoso)</option></select>
-            <select id="cam_apia_i"><option value="">–</option><option>Neutro</option><option>Antepié varo estructural leve</option><option>Antepié varo estructural moderado</option><option>Antepié varo estructural severo</option><option>Antepié varo pronado (músculo-ligamentoso)</option><option>Antepié valgo estructural</option><option>Antepié valgo supinado (músculo-ligamentoso)</option></select>
+            <select id="cam_apia_d"><option value="">–</option><option>Neutro</option><option>Antepié varo estructural leve</option><option>Antepié varo estructural moderado</option><option>Antepié varo estructural severo</option><option>Antepié supinado (músculo-ligamentoso)</option><option>Antepié valgo estructural</option><option>Antepié pronado (músculo-ligamentoso)</option></select>
+            <select id="cam_apia_i"><option value="">–</option><option>Neutro</option><option>Antepié varo estructural leve</option><option>Antepié varo estructural moderado</option><option>Antepié varo estructural severo</option><option>Antepié supinado (músculo-ligamentoso)</option><option>Antepié valgo estructural</option><option>Antepié pronado (músculo-ligamentoso)</option></select>
           </div>
         </div>
       </div>
@@ -464,13 +465,6 @@
 
       <div class="subsection">
         <h3>Tests metatarsofalángicos</h3>
-        <div class="field"><label>Test de Jack / Windlass</label>
-          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
-          <div class="grid-di">
-            <select id="cam_jack_d"><option value="">–</option><option>Positivo (mecanismo eficaz)</option><option>Positivo con resistencia leve</option><option>Positivo con resistencia moderada</option><option>Negativo (mecanismo ineficaz)</option></select>
-            <select id="cam_jack_i"><option value="">–</option><option>Positivo (mecanismo eficaz)</option><option>Positivo con resistencia leve</option><option>Positivo con resistencia moderada</option><option>Negativo (mecanismo ineficaz)</option></select>
-          </div>
-        </div>
         <div class="field"><label>Lachman metatarsofalángico</label>
           <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
           <div class="grid-di">
@@ -624,11 +618,18 @@
             <input type="number" id="bip_lunge_cm_i" placeholder="cm" step="0.5" min="0" max="20" style="text-align:center;" inputmode="decimal">
           </div>
         </div>
+        <div class="field"><label>Test de Jack / Windlass (Hubscher) – en carga</label>
+          <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
+          <div class="grid-di">
+            <select id="cam_jack_d"><option value="">–</option><option>Negativo (mecanismo eficaz)</option><option>Positivo leve (eficaz con resistencia leve)</option><option>Positivo moderado (eficaz con resistencia moderada)</option><option>Positivo (mecanismo ineficaz)</option></select>
+            <select id="cam_jack_i"><option value="">–</option><option>Negativo (mecanismo eficaz)</option><option>Positivo leve (eficaz con resistencia leve)</option><option>Positivo moderado (eficaz con resistencia moderada)</option><option>Positivo (mecanismo ineficaz)</option></select>
+          </div>
+        </div>
         <div class="field"><label>Heel Rise Test – Elevación del talón</label>
           <div class="grid-di-label"><span class="lbl-d">Derecho</span><span class="lbl-i">Izquierdo</span></div>
           <div class="grid-di">
-            <select id="bip_heel_d"><option value="">–</option><option>Positivo (reinversión correcta)</option><option>Positivo con resistencia leve</option><option>Dudoso / parcial</option><option>Negativo (sin reinversión)</option></select>
-            <select id="bip_heel_i"><option value="">–</option><option>Positivo (reinversión correcta)</option><option>Positivo con resistencia leve</option><option>Dudoso / parcial</option><option>Negativo (sin reinversión)</option></select>
+            <select id="bip_heel_d"><option value="">–</option><option>Negativo (reinversión correcta)</option><option>Positivo leve (reinversión con resistencia)</option><option>Dudoso / parcial</option><option>Positivo (sin reinversión)</option></select>
+            <select id="bip_heel_i"><option value="">–</option><option>Negativo (reinversión correcta)</option><option>Positivo leve (reinversión con resistencia)</option><option>Dudoso / parcial</option><option>Positivo (sin reinversión)</option></select>
           </div>
         </div>
         <div class="field"><label>Máxima pronación</label>
@@ -2040,7 +2041,6 @@ ${par('HLF', 'cam_hlf_d', 'cam_hlf_i')}
 ${par('Antepié-retropié (Root)', 'cam_apia_d', 'cam_apia_i')}
 ${par('AKE Test', 'cam_ake_d', 'cam_ake_i')}
 ${par('Silverskiöld', 'cam_silv_d', 'cam_silv_i')}
-${par('Jack / Windlass', 'cam_jack_d', 'cam_jack_i')}
 ${par('Lachman MTF', 'cam_lach_d', 'cam_lach_i')}
 ${par('Kelikian', 'cam_keli_d', 'cam_keli_i')}${g('cam_otros') ? '\nOtros hallazgos: ' + g('cam_otros') : ''}
 
@@ -2059,6 +2059,7 @@ ${par('Ángulo de Fick', 'bip_apg_d', 'bip_apg_i')}
 ${par('EJEASA', 'bip_ejeasa_d', 'bip_ejeasa_i')}
 ${par('Test Hintermann', 'bip_hinter_d', 'bip_hinter_i')}
 Lunge Test: D ${lunge('bip_lunge_d', 'bip_lunge_cm_d')} / I ${lunge('bip_lunge_i', 'bip_lunge_cm_i')}
+${par('Jack / Windlass (Hubscher, en carga)', 'cam_jack_d', 'cam_jack_i')}
 ${par('Heel Rise Test', 'bip_heel_d', 'bip_heel_i')}
 ${par('Máxima pronación', 'bip_maxpron_d', 'bip_maxpron_i')}
 ${par('Resistencia a supinación', 'bip_ressup_d', 'bip_ressup_i')}

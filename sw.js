@@ -2,7 +2,7 @@
    Objetivo: que la ficha abra al instante y sin conexión en la consulta.
    Sube CACHE_VERSION cada vez que edites index.html, o el iPad seguirá
    sirviendo la versión antigua desde caché. */
-const CACHE_VERSION = 'pododepor-v6.1.0';
+const CACHE_VERSION = 'pododepor-v6.2.1';
 
 const ARCHIVOS = [
   './',
