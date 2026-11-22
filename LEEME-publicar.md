@@ -64,3 +64,29 @@ Los datos viven **solo en el iPad**. Exporta la copia de vez en cuando (🗂 His
 El archivo que se descarga **va cifrado con tu contraseña**, así que puedes guardarlo en OneDrive sin exponer datos de salud. Para restaurarlo en otro dispositivo: **Importar copia** y, si la contraseña de ese aparato es distinta, te la pedirá.
 
 Si borras los datos de Safari, restauras el iPad o cambias de dispositivo, esa copia es lo único que recupera tus fichas.
+
+---
+
+# App de vídeo · «Vídeo PD» (carpeta `video/`)
+
+Análisis de marcha y carrera en vídeo: goniómetro, líneas y flechas, plantillas guiadas (sagital, posterior, frontal), calibración en cm, comparación de dos vídeos, detección automática de articulaciones (IA), sesiones cifradas y exportación (PNG, CSV, vídeo anotado).
+
+## Publicarla
+
+Va dentro del mismo repositorio. Sube la **carpeta `video/` completa** (con su subcarpeta `vendor/`, que contiene la IA). Con GitHub Pages ya activo, quedará en:
+
+`https://TUUSUARIO.github.io/ficha-pododepor/video/`
+
+## Instalarla
+
+- **iPad**: abre esa dirección en Safari → Compartir → **Añadir a pantalla de inicio**. Aparece el icono «Vídeo PD».
+- **Android**: ábrela en Chrome → menú ⋮ → **Instalar aplicación** (o «Añadir a pantalla de inicio»).
+
+Es una app independiente de la ficha: tiene su propio icono, su propia contraseña y sus propias sesiones.
+
+## A tener en cuenta
+
+- **Los vídeos no se guardan en la app** ni salen del dispositivo. Una sesión guarda las mediciones, la calibración y los datos de la IA; al reabrirla te pide el mismo archivo de vídeo.
+- **La IA** (MediaPipe, unos 20 MB) se descarga la primera vez que pulsas 🤖 IA. Después funciona sin conexión.
+- **Contraseña**: igual que en la ficha. Si la olvidas, las sesiones de vídeo no se pueden recuperar. Haz copia con 📁 → ⤓ Copia.
+- **Al actualizar la app**: sube el número de `CACHE_VERSION` en `video/sw.js` (por ejemplo de `videopd-v1.0.0` a `videopd-v1.0.1`).

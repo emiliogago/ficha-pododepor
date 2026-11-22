@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vídeo PD">
+<meta name="theme-color" content="#0F2744">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Vídeo PD · Análisis de marcha y carrera</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --navy:#0F2744; --navy2:#16355c; --navy3:#1f4673; --blue:#2B6CB0;
+  --gold:#C8A84B; --cream:#FEFCF7; --text:#E8EEF6; --muted:#9FB2C8;
+  --line:#2b4a70; --danger:#E05656; --ok:#3FB37F;
+  --stage:#0a1626;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--navy);color:var(--text);
+  font:15px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button,select,input{font:inherit;color:inherit}
+button{background:var(--navy2);border:1px solid var(--line);border-radius:9px;padding:7px 10px;cursor:pointer;min-height:38px;white-space:nowrap}
+button:active{background:var(--navy3)}
+button.on{background:var(--gold);color:var(--navy);border-color:var(--gold);font-weight:600}
+button.prim{background:var(--blue);border-color:var(--blue);font-weight:600}
+button.danger{border-color:var(--danger);color:#ffb3b3}
+button:disabled{opacity:.4}
+select,input[type=text],input[type=number],input[type=password],input[type=search],textarea{
+  background:var(--navy);border:1px solid var(--line);border-radius:8px;padding:7px 8px;min-height:38px;max-width:100%}
+textarea{font:inherit;color:inherit;width:100%;min-height:70px;-webkit-user-select:text;user-select:text}
+input{-webkit-user-select:text;user-select:text}
+.app{position:fixed;inset:0;display:grid;
+  grid-template-rows:auto 1fr auto auto;
+  grid-template-columns:1fr auto;
+  grid-template-areas:"top top" "work side" "graph side" "trans trans";
+  padding:var(--safe-t) var(--safe-r) 0 var(--safe-l)}
+/* ---- cabecera ---- */
+#top{grid-area:top;display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid var(--line);min-width:0}
+.brand{font-weight:700;color:var(--gold);letter-spacing:.3px;white-space:nowrap}
+.brand small{color:var(--muted);font-weight:400}
+#sessInfo{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:13px;padding-left:6px}
+#top .ic{padding:6px 9px}
+#top .lbl{margin-left:4px}
+/* ---- paneles de vídeo ---- */
+#work{grid-area:work;position:relative;min-height:0;min-width:0;display:grid;gap:4px;padding:4px}
+#work.dual{grid-template-columns:1fr 1fr}
+@media (orientation:portrait){ #work.dual{grid-template-columns:1fr;grid-template-rows:1fr 1fr} }
+.pane{position:relative;display:flex;flex-direction:column;min-height:0;min-width:0;border:2px solid transparent;border-radius:10px;background:var(--stage);overflow:hidden}
+#work.dual .pane.active{border-color:var(--gold)}
+.stage{position:relative;flex:1;min-height:0;touch-action:none;overflow:hidden}
+.stage canvas.main{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage video{position:absolute;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none}
+.loupe{position:absolute;width:132px;height:132px;border-radius:50%;border:3px solid var(--gold);box-shadow:0 4px 18px rgba(0,0,0,.6);pointer-events:none;display:none;background:#000}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px;color:var(--muted)}
+.empty .big{font-size:17px;color:var(--text);font-weight:600}
+.empty .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.paneTag{position:absolute;left:8px;top:8px;background:rgba(15,39,68,.8);border-radius:6px;padding:2px 7px;font-size:12px;color:var(--gold);pointer-events:none;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptl{display:flex;align-items:center;gap:6px;padding:4px 6px;border-top:1px solid var(--line);background:var(--navy)}
+.ptl .flabel{font-variant-numeric:tabular-nums;font-size:12px;color:var(--muted);min-width:92px;text-align:right}
+.tlwrap{position:relative;flex:1;height:34px}
+.tlwrap input[type=range]{position:absolute;inset:0;width:100%;margin:0;height:34px;background:transparent;-webkit-appearance:none;appearance:none;touch-action:none}
+.tlwrap input[type=range]::-webkit-slider-runnable-track{height:6px;background:var(--line);border-radius:3px}
+.tlwrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--gold);margin-top:-8px;border:2px solid var(--navy)}
+.tlwrap input[type=range]::-moz-range-track{height:6px;background:var(--line);border-radius:3px}
+.tlwrap input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--gold);border:2px solid var(--navy)}
+.marks{position:absolute;left:11px;right:11px;top:0;height:100%;pointer-events:none}
+.marks i{position:absolute;top:2px;width:3px;height:9px;margin-left:-1px;background:#7fd3ff;border-radius:1px}
+.marks i.ab{background:var(--gold);height:30px;top:2px;width:2px;opacity:.9}
+.marks .rng{position:absolute;top:26px;height:4px;background:rgba(200,168,75,.45);border-radius:2px}
+.ptl .mini{min-height:32px;padding:4px 8px;font-size:13px}
+/* ---- gráfica ---- */
+#graph{grid-area:graph;display:none;border-top:1px solid var(--line);padding:4px 6px;background:var(--navy)}
+#graph.show{display:block}
+#graph .ghead{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px}
+#graph canvas{width:100%;height:150px;display:block;touch-action:none}
+/* ---- barra lateral ---- */
+#side{grid-area:side;width:300px;border-left:1px solid var(--line);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px;display:flex;flex-direction:column;gap:10px}
+.sec h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--gold)}
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.tools button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;font-size:11.5px;line-height:1.1;min-height:52px;white-space:normal}
+.tools button .g{font-size:19px;line-height:1}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.swatches{display:flex;gap:6px;flex-wrap:wrap}
+.swatches button{width:32px;height:32px;min-height:32px;padding:0;border-radius:50%;border:2px solid transparent}
+.swatches button.on{border-color:#fff;box-shadow:0 0 0 2px var(--navy) inset}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:0;border-radius:0;min-height:34px;padding:5px 10px}
+.list{display:flex;flex-direction:column;gap:4px}
+.list .it{background:var(--navy2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;cursor:pointer}
+.list .it.sel{border-color:var(--gold)}
+.list .it b{color:var(--gold);font-weight:600}
+.list .it .v{color:#fff;font-variant-numeric:tabular-nums}
+.list .it .meta{color:var(--muted);font-size:12px}
+.muted{color:var(--muted);font-size:12.5px}
+label.chk{display:flex;align-items:center;gap:6px;font-size:14px}
+label.chk input{width:20px;height:20px}
+/* ---- transporte ---- */
+#trans{grid-area:trans;display:flex;align-items:center;gap:5px;padding:6px 8px calc(6px + var(--safe-b));border-top:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch}
+#trans button{min-width:42px}
+#trans .play{min-width:56px;font-size:18px}
+#trans .sp{flex:1}
+#trans select{min-height:38px}
+/* ---- guía de plantilla ---- */
+#guide{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:5;background:rgba(15,39,68,.95);border:1px solid var(--gold);border-radius:12px;padding:8px 10px;display:none;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 16px);box-shadow:0 4px 18px rgba(0,0,0,.5)}
+#guide.show{display:flex}
+#guide .txt{font-weight:600}
+#guide .txt small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+/* ---- modales ---- */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(5,12,24,.72);display:none;align-items:center;justify-content:center;padding:calc(12px + var(--safe-t)) 12px calc(12px + var(--safe-b))}
+.modal.show{display:flex}
+.card{background:var(--navy2);border:1px solid var(--line);border-radius:14px;width:min(560px,100%);max-height:100%;overflow:auto;padding:14px 16px;-webkit-overflow-scrolling:touch}
+.card h2{margin:0 0 10px;font-size:18px;color:var(--gold)}
+.card h4{margin:14px 0 4px;color:var(--gold)}
+.card p,.card li{color:#d5deea;font-size:14px}
+.card .acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field>span{font-size:12.5px;color:var(--muted)}
+.prog{height:10px;background:var(--navy);border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+.prog>div{height:100%;width:0;background:var(--gold);transition:width .15s}
+#toast{position:fixed;left:50%;bottom:calc(76px + var(--safe-b));transform:translateX(-50%);z-index:60;background:#000c;color:#fff;padding:8px 14px;border-radius:10px;font-size:14px;display:none;max-width:90%;text-align:center}
+#toast.show{display:block}
+.sessrow{display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;background:var(--navy)}
+.sessrow .inf{flex:1;min-width:0}
+.sessrow .inf b{display:block}
+.sessrow .inf span{font-size:12.5px;color:var(--muted)}
+/* hoja inferior (pantallas estrechas) */
+#sheetBtn{display:none}
+@media (max-width:899px), (orientation:portrait) and (max-width:1100px){
+  .app{grid-template-columns:1fr;grid-template-areas:"top" "work" "graph" "trans";grid-template-rows:auto 1fr auto auto}
+  #side{position:fixed;left:0;right:0;bottom:0;width:auto;max-height:62vh;z-index:30;background:var(--navy);border-left:0;border-top:2px solid var(--gold);border-radius:14px 14px 0 0;
+        transform:translateY(105%);transition:transform .22s ease;padding-bottom:calc(12px + var(--safe-b));box-shadow:0 -8px 30px rgba(0,0,0,.5)}
+  #side.open{transform:none}
+  #sheetBtn{display:inline-block}
+  .tools{grid-template-columns:repeat(4,1fr)}
+  #top .lbl{display:none}
+  #graph canvas{height:120px}
+}
+@media (max-width:520px){ .brand small{display:none} #sessInfo{display:none} }
+.sideClose{display:none}
+@media (max-width:899px), (orientation:portrait) and (max-width:1100px){ .sideClose{display:block;margin-left:auto} }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header id="top">
+    <div class="brand">Vídeo PD <small>· Pododepor</small></div>
+    <div id="sessInfo">Sin sesión</div>
+    <button class="ic" id="bSesiones" title="Sesiones guardadas">📁<span class="lbl">Sesiones</span></button>
+    <button class="ic" id="bGuardar" title="Guardar sesión">💾<span class="lbl">Guardar</span></button>
+    <button class="ic" id="bComparar" title="Comparar dos vídeos">⧉<span class="lbl">Comparar</span></button>
+    <button class="ic" id="bExportar" title="Exportar">⤓<span class="lbl">Exportar</span></button>
+    <button class="ic" id="bAyuda" title="Ayuda">?</button>
+  </header>
+
+  <main id="work">
+    <div id="guide">
+      <div class="txt" id="guideTxt"></div>
+      <button id="gBack">↶ Atrás</button>
+      <button id="gSkip">Omitir</button>
+      <button id="gCancel" class="danger">Cancelar</button>
+    </div>
+  </main>
+
+  <section id="graph">
+    <div class="ghead">
+      <b style="color:var(--gold)">Cinemática (IA)</b>
+      <select id="gMetric"></select>
+      <label class="chk"><input type="checkbox" id="gSmooth" checked> Suavizar</label>
+      <span class="muted" id="gInfo"></span>
+      <span style="flex:1"></span>
+      <button class="mini" id="gToTpl" title="Convertir el esqueleto de este fotograma en una plantilla editable">➜ Plantilla</button>
+      <button class="mini" id="gClose">✕</button>
+    </div>
+    <canvas id="gCanvas"></canvas>
+  </section>
+
+  <aside id="side">
+    <div class="row"><b style="color:var(--gold)">Herramientas</b><button class="sideClose" id="sideClose">Cerrar ✕</button></div>
+    <div class="sec">
+      <div class="tools" id="tools"></div>
+    </div>
+    <div class="sec">
+      <h3>Plantillas guiadas</h3>
+      <div class="tools" id="tpls"></div>
+    </div>
+    <div class="sec">
+      <h3>Contexto de la medición</h3>
+      <div class="row" style="margin-bottom:6px">
+        <span class="muted">Actividad</span>
+        <div class="seg" id="segAct"><button data-v="marcha">Marcha</button><button data-v="carrera">Carrera</button></div>
+      </div>
+      <div class="row" style="margin-bottom:6px">
+        <span class="muted">Lado</span>
+        <div class="seg" id="segLado"><button data-v="D">Dcho</button><button data-v="I">Izdo</button></div>
+      </div>
+      <div class="row"><span class="muted">Fase</span><select id="selFase" style="flex:1"></select></div>
+    </div>
+    <div class="sec">
+      <h3>Estilo</h3>
+      <div class="swatches" id="swatches"></div>
+      <div class="row" style="margin-top:6px"><span class="muted">Grosor</span><input type="range" id="grosor" min="1" max="6" step="1" value="3" style="flex:1"></div>
+      <div class="row" style="margin-top:6px">
+        <label class="chk"><input type="checkbox" id="chkGrid"> Rejilla</label>
+        <label class="chk"><input type="checkbox" id="chkPose" checked> Esqueleto IA</label>
+      </div>
+    </div>
+    <div class="sec" id="selSec" style="display:none">
+      <h3>Seleccionado</h3>
+      <div class="row" style="margin-bottom:6px"><input type="text" id="selLabel" placeholder="Etiqueta (opcional)" style="flex:1"></div>
+      <div class="row" style="margin-bottom:6px">
+        <label class="chk"><input type="checkbox" id="selFijo"> Visible en todo el vídeo</label>
+      </div>
+      <div class="row">
+        <button id="selDel" class="danger">🗑 Borrar</button>
+        <button id="selDup" title="Copiar al fotograma actual">⧉ Copiar aquí</button>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Mediciones</h3><button class="mini" id="bUndo" style="min-height:30px;padding:3px 9px">↶ Deshacer</button></div>
+      <div class="muted" id="calibInfo" style="margin:4px 0">Sin calibrar (distancias en px)</div>
+      <div class="list" id="mlist"></div>
+    </div>
+  </aside>
+
+  <footer id="trans">
+    <button id="sheetBtn" title="Herramientas">🛠</button>
+    <button id="tA" title="Marcar inicio del tramo">A</button>
+    <button id="tP5" title="5 fotogramas atrás">−5</button>
+    <button id="tP1" title="Fotograma anterior">◀︎</button>
+    <button id="tPlay" class="play prim" title="Reproducir / pausa">▶︎</button>
+    <button id="tN1" title="Fotograma siguiente">▶︎|</button>
+    <button id="tN5" title="5 fotogramas adelante">+5</button>
+    <button id="tB" title="Marcar fin del tramo">B</button>
+    <button id="tLoop" title="Repetir tramo A–B">⟲</button>
+    <select id="tSpeed" title="Velocidad">
+      <option value="0.1">×0,1</option><option value="0.25">×0,25</option><option value="0.5">×0,5</option><option value="1" selected>×1</option>
+    </select>
+    <button id="tFit" title="Ajustar zoom">⤢</button>
+    <button id="tLink" title="Vincular los dos vídeos" style="display:none">🔗</button>
+    <span class="sp"></span>
+    <button id="tIA" title="Detección automática de articulaciones">🤖 IA</button>
+  </footer>
+</div>
+
+<!-- ===== Modales ===== -->
+<div class="modal" id="mLock"><div class="card">
+  <h2 id="lockTitle">Sesiones cifradas</h2>
+  <p id="lockMsg"></p>
+  <div class="field"><span>Contraseña</span><input type="password" id="lockPass" autocomplete="current-password"></div>
+  <div class="field" id="lockPass2Wrap"><span>Repite la contraseña</span><input type="password" id="lockPass2" autocomplete="new-password"></div>
+  <p class="muted" id="lockErr" style="color:#ffb3b3"></p>
+  <div class="acts"><button id="lockCancel">Cancelar</button><button id="lockOk" class="prim">Abrir</button></div>
+</div></div>
+
+<div class="modal" id="mSave"><div class="card">
+  <h2>Guardar sesión</h2>
+  <div class="field"><span>Nº de historia / identificador del paciente</span><input type="text" id="svNhc" autocomplete="off"></div>
+  <div class="field"><span>Nombre (opcional, se guarda cifrado)</span><input type="text" id="svNombre" autocomplete="off"></div>
+  <div class="field"><span>Notas</span><textarea id="svNotas" placeholder="Calzado, velocidad de la cinta, plantillas, observaciones…"></textarea></div>
+  <p class="muted">Se guardan las mediciones, la calibración y los datos de la IA. El vídeo no se guarda en la app: al reabrir la sesión te pedirá el mismo archivo.</p>
+  <div class="acts"><button id="svCancel">Cancelar</button><button id="svNew">Guardar como nueva</button><button id="svOk" class="prim">Guardar</button></div>
+</div></div>
+
+<div class="modal" id="mSess"><div class="card">
+  <h2>Sesiones guardadas</h2>
+  <div class="row" style="margin-bottom:8px"><input type="search" id="ssBuscar" placeholder="Buscar por nº de historia, nombre o notas" style="flex:1"></div>
+  <div id="ssList"></div>
+  <div class="acts" style="justify-content:space-between">
+    <div class="row">
+      <button id="ssExport">⤓ Copia</button>
+      <button id="ssImport">⤒ Importar</button>
+      <button id="ssLock">🔒 Bloquear</button>
+      <button id="ssPass">🔑 Contraseña</button>
+    </div>
+    <div class="row"><button id="ssNueva">＋ Nueva</button><button id="ssClose" class="prim">Cerrar</button></div>
+  </div>
+  <input type="file" id="ssFile" accept=".json,application/json" hidden>
+</div></div>
+
+<div class="modal" id="mExport"><div class="card">
+  <h2>Exportar</h2>
+  <div class="list">
+    <button id="exPng">🖼 Captura anotada del fotograma (PNG)</button>
+    <button id="exCsv">📋 Tabla de mediciones (CSV para Excel)</button>
+    <button id="exCopy">📎 Copiar mediciones al portapapeles</button>
+    <button id="exKin">📈 Cinemática IA fotograma a fotograma (CSV)</button>
+    <button id="exVid">🎬 Vídeo anotado…</button>
+  </div>
+  <div class="acts"><button id="exClose">Cerrar</button></div>
+</div></div>
+
+<div class="modal" id="mVid"><div class="card">
+  <h2>Vídeo anotado</h2>
+  <p>Se graba el tramo A–B (o el vídeo entero) con las anotaciones dibujadas. La grabación es en tiempo real: no cambies de app mientras dura.</p>
+  <div class="field"><span>Velocidad del vídeo resultante</span>
+    <select id="vSpeed"><option value="1">Normal (×1)</option><option value="0.5">Lenta (×0,5)</option><option value="0.25" selected>Muy lenta (×0,25)</option><option value="0.1">Súper lenta (×0,1)</option></select></div>
+  <div class="field"><span>Pausa en cada fotograma con mediciones</span>
+    <select id="vHold"><option value="0">Sin pausa</option><option value="1.5">1,5 s</option><option value="3" selected>3 s</option><option value="5">5 s</option></select></div>
+  <label class="chk" style="margin-bottom:8px"><input type="checkbox" id="vPose" checked> Incluir esqueleto IA (si existe)</label>
+  <div class="prog"><div id="vProg"></div></div>
+  <p class="muted" id="vMsg"></p>
+  <div class="acts"><button id="vCancel">Cerrar</button><button id="vGo" class="prim">Grabar</button></div>
+</div></div>
+
+<div class="modal" id="mIA"><div class="card">
+  <h2>🤖 Detección automática</h2>
+  <p>La IA localiza hombros, caderas, rodillas, tobillos, talones y dedos en cada fotograma del tramo y calcula los ángulos. Funciona en el dispositivo: el vídeo no sale de aquí.</p>
+  <div class="field"><span>Vista del vídeo</span>
+    <select id="iaVista"><option value="sagital">Sagital (lateral)</option><option value="posterior">Posterior</option><option value="frontal">Frontal (anterior)</option></select></div>
+  <div class="field"><span>Tramo</span>
+    <select id="iaTramo"><option value="ab">Tramo A–B</option><option value="todo">Vídeo entero</option></select></div>
+  <div class="field"><span>Analizar</span>
+    <select id="iaPaso"><option value="1">Todos los fotogramas</option><option value="2">1 de cada 2 (más rápido)</option><option value="4">1 de cada 4 (rápido)</option></select></div>
+  <label class="chk" style="margin-bottom:6px"><input type="checkbox" id="iaRoi" checked> Analizar solo la zona visible (haz zoom sobre el paciente antes: mejora mucho la precisión si sale pequeño)</label>
+  <p class="muted">Limitaciones: es una estimación 2D. Sirve para cadera, rodilla, tobillo, tronco y pelvis; no ve el retropié (calcáneo), que debes medir a mano con la plantilla posterior. La primera vez descarga el modelo (~20 MB) y después funciona sin conexión.</p>
+  <div class="prog"><div id="iaProg"></div></div>
+  <p class="muted" id="iaMsg"></p>
+  <div class="acts"><button id="iaBorrar" class="danger">Borrar datos IA</button><button id="iaCancel">Cerrar</button><button id="iaGo" class="prim">Analizar</button></div>
+</div></div>
+
+<div class="modal" id="mPrompt"><div class="card">
+  <h2 id="prTitle"></h2>
+  <p id="prMsg"></p>
+  <div class="field"><input type="text" id="prInput" autocomplete="off"></div>
+  <div class="acts"><button id="prCancel">Cancelar</button><button id="prOk" class="prim">Aceptar</button></div>
+</div></div>
+
+<div class="modal" id="mPane"><div class="card">
+  <h2>Ajustes del vídeo</h2>
+  <div class="field"><span>Fotogramas por segundo (para avanzar de uno en uno)</span>
+    <select id="pnFps"><option>24</option><option>25</option><option>30</option><option>50</option><option>60</option><option>100</option><option>120</option><option>240</option></select></div>
+  <p class="muted" id="pnInfo"></p>
+  <label class="chk" style="margin-bottom:8px"><input type="checkbox" id="pnMirror"> Ver en espejo (solo visual)</label>
+  <div class="acts"><button id="pnQuitar" class="danger">Quitar vídeo</button><button id="pnClose" class="prim">Hecho</button></div>
+</div></div>
+
+<div class="modal" id="mHelp"><div class="card">
+  <h2>Guía rápida</h2>
+  <h4>1 · Grabar</h4>
+  <ul>
+    <li><b>Cámara lenta</b> siempre que puedas (120–240 fps): grábala con la app Cámara y ábrela aquí con «Abrir vídeo».</li>
+    <li>Cámara <b>fija y perpendicular</b> al plano que mides, a la altura de rodilla/cadera y a 2–3 m. Buena luz, ropa ajustada y, si puedes, marcas adhesivas en los puntos óseos.</li>
+    <li>Para distancias en cm, que en el plano del paciente se vea algo de medida conocida (una regla, una marca en la cinta) y usa <b>📏 Calibrar</b>.</li>
+  </ul>
+  <h4>2 · Medir</h4>
+  <ul>
+    <li>Avanza fotograma a fotograma con ◀︎ y ▶︎|, o arrastra la barra. Pellizca para hacer zoom y arrastra con dos dedos para moverte.</li>
+    <li>Elige una herramienta y toca los puntos. Mientras mantienes el dedo aparece una <b>lupa</b> para afinar. Al terminar, los puntos se pueden seguir arrastrando.</li>
+    <li>Las mediciones quedan <b>en su fotograma</b> (marcas azules en la barra). Marca «Visible en todo el vídeo» para líneas de referencia.</li>
+    <li><b>Plantillas guiadas</b>: te piden los puntos uno a uno y calculan todos los ángulos de la vista. «Omitir» salta un punto que no se ve.</li>
+  </ul>
+  <h4>3 · Criterios de signo</h4>
+  <ul>
+    <li>Cadera: + flexión / − extensión (muslo respecto al tronco). Rodilla: + flexión. Tobillo: + dorsiflexión / − flexión plantar (tibia frente a línea talón–5º MTT; 0° ≈ bipedestación).</li>
+    <li>Tronco y tibia: inclinación respecto a la vertical, + hacia delante. Ángulo del pie: + talón primero / − antepié.</li>
+    <li>Retropié: ángulo entre bisección de pierna y de calcáneo, eversión (valgo) o inversión (varo). FPPA: valgo o varo dinámico de rodilla.</li>
+    <li>Son medidas 2D: el error crece si la cámara no está perpendicular o el segmento rota fuera del plano.</li>
+  </ul>
+  <h4>4 · Comparar</h4>
+  <ul><li>⧉ Comparar abre dos vídeos. Coloca cada uno en el mismo instante (por ejemplo el contacto inicial) y pulsa 🔗 para avanzarlos juntos.</li></ul>
+  <h4>5 · Privacidad</h4>
+  <ul><li>Los vídeos nunca salen del dispositivo. Las sesiones guardadas van cifradas (AES-256) con una contraseña que no se puede recuperar: apúntala. Haz copias con 📁 → ⤓ Copia.</li></ul>
+  <div class="acts"><button id="helpClose" class="prim">Entendido</button></div>
+</div></div>
+
+<div id="toast"></div>
+<input type="file" id="fileVideo" accept="video/*" hidden>
+<input type="file" id="fileCam" accept="video/*" capture="environment" hidden>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
