@@ -349,10 +349,14 @@ class Pane {
     this.file = file; this.videoName = file.name || 'vídeo';
     v.src = this.url; v.load();
     await new Promise((res, rej) => {
-      const ok = () => { v.removeEventListener('loadeddata', ok); v.removeEventListener('error', ko); res(); };
-      const ko = () => { v.removeEventListener('loadeddata', ok); v.removeEventListener('error', ko); rej(new Error('formato')); };
+      const limpiar = () => { clearTimeout(to); v.removeEventListener('loadeddata', ok); v.removeEventListener('error', ko); };
+      const ok = () => { limpiar(); res(); };
+      const ko = () => { limpiar(); const e = new Error('formato'); e.codigo = v.error ? v.error.code : 0; rej(e); };
+      const to = setTimeout(() => { limpiar(); const e = new Error('tiempo'); e.codigo = 'tiempo'; rej(e); }, 20000);
       v.addEventListener('loadeddata', ok); v.addEventListener('error', ko);
     });
+    // Sin decodificador de vídeo (típico: HEVC del iPhone en Windows) el navegador abre solo el audio: ancho 0.
+    if (!v.videoWidth || !v.videoHeight) { const e = new Error('sin imagen'); e.codigo = 'sinimagen'; throw e; }
     this.empty.style.display = 'none';
     this.fps = await this.detectFps();
     this.ready = true; this.userZoom = false;
@@ -1195,7 +1199,24 @@ async function cargarVideoEn(pane, file) {
   } catch (e) {
     console.warn(e);
     pane.unload();
-    toast('No se pudo abrir el vídeo. Prueba a exportarlo como MP4 (H.264) desde la galería.', 6000);
+    toast('', 1);
+    const nombre = file.name || 'el vídeo', ext = (nombre.split('.').pop() || '').toLowerCase();
+    const hevc = !document.createElement('video').canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0"');
+    let msg;
+    if (e.codigo === 'sinimagen' || e.codigo === 4 || e.codigo === 3 || e.codigo === 'formato') {
+      msg = `Este navegador no puede descodificar «${nombre}».` +
+        (hevc ? ' Casi seguro está grabado en HEVC (el formato por defecto del iPhone/iPad), que este equipo no sabe leer.' : '') +
+        '\n\nSoluciones:\n' +
+        '• En el iPhone/iPad: Ajustes → Cámara → Formatos → «Más compatible». Los vídeos nuevos se abrirán en cualquier sitio.\n' +
+        '• Para los que ya tienes: compártelos desde la app Fotos con «Opciones → Más compatible», o pásalos por AirDrop/correo, que suele convertirlos a H.264.\n' +
+        '• En Windows con Edge: instala «Extensiones de vídeo HEVC» desde Microsoft Store y reinicia Edge.\n' +
+        '• Los vídeos MP4 de móviles Android normalmente se abren sin problema.';
+    } else if (e.codigo === 'tiempo') {
+      msg = `«${nombre}» tarda demasiado en abrirse. Si está en OneDrive/iCloud, descárgalo antes al equipo («Mantener siempre en este dispositivo») y vuelve a intentarlo.`;
+    } else {
+      msg = `No se pudo abrir «${nombre}» (${e.message || e}). Prueba con otro vídeo o expórtalo como MP4 (H.264).`;
+    }
+    preguntar('No se puede abrir el vídeo', msg, '', { input: false, ok: 'Entendido' });
   }
 }
 function abrirAjustesPane(pane) {
