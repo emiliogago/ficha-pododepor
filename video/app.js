@@ -507,6 +507,8 @@ class Pane {
 
   /* ---------- puntero / gestos ---------- */
   onDown(e) {
+    // Los botones del panel (Abrir vídeo, Grabar) deben recibir su clic: no capturar el puntero.
+    if (e.target.closest('button, .empty')) { setActive(this.i); return; }
     e.preventDefault();
     setActive(this.i);
     try { this.stage.setPointerCapture(e.pointerId); } catch (_) {}
