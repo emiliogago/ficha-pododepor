@@ -25,7 +25,8 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(claves => Promise.all(claves.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k))))
+      // Solo las cachés propias: la app de vídeo (/video/) comparte origen y tiene las suyas.
+      .then(claves => Promise.all(claves.filter(k => k.startsWith('pododepor-') && k !== CACHE_VERSION).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -35,6 +36,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET' || !req.url.startsWith(self.location.origin)) return;
+  if (new URL(req.url).pathname.includes('/video/')) return;   // eso lo gestiona la app de vídeo
 
   event.respondWith(
     caches.match(req).then(cacheada => {

@@ -1,0 +1,20 @@
+{
+  "name": "Vídeo PD · Análisis de marcha y carrera · Pododepor",
+  "short_name": "Vídeo PD",
+  "description": "Análisis cinemático en vídeo: goniómetro, líneas, plantillas, comparación y detección automática de articulaciones. Los datos se quedan en este dispositivo.",
+  "lang": "es",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0F2744",
+  "theme_color": "#0F2744",
+  "categories": ["medical", "health", "sports"],
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
