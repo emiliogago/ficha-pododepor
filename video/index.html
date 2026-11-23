@@ -123,6 +123,20 @@ label.chk input{width:20px;height:20px}
 .card .acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
 .field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
 .field>span{font-size:12.5px;color:var(--muted)}
+.card.wide{width:min(900px,100%)}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;margin:4px 0 10px}
+.tbl th,.tbl td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left;white-space:normal}
+.tbl th{color:var(--gold);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+.tbl tr.grp td{color:var(--gold);font-weight:600;padding-top:10px;border-bottom:1px solid var(--gold)}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-left:5px;vertical-align:middle}
+.dot.v{background:#3FB37F}.dot.a{background:#F2B233}.dot.r{background:#E05656}
+#rgTabla td:nth-child(2),#rgTabla th:nth-child(2),#rgTabla td:nth-child(3),#rgTabla th:nth-child(3){text-align:left;white-space:normal}
+#rgTabla td:first-child,#rgTabla th:first-child{text-align:center}
+.tbl input{width:64px;min-height:32px;padding:3px 5px;text-align:right}
+.evbtns{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.evbtns button{font-size:13px;padding:6px 4px}
 .prog{height:10px;background:var(--navy);border-radius:5px;overflow:hidden;border:1px solid var(--line)}
 .prog>div{height:100%;width:0;background:var(--gold);transition:width .15s}
 #toast{position:fixed;left:50%;bottom:calc(76px + var(--safe-b));transform:translateX(-50%);z-index:60;background:#000c;color:#fff;padding:8px 14px;border-radius:10px;font-size:14px;display:none;max-width:90%;text-align:center}
@@ -156,6 +170,7 @@ label.chk input{width:20px;height:20px}
     <button class="ic" id="bSesiones" title="Sesiones guardadas">📁<span class="lbl">Sesiones</span></button>
     <button class="ic" id="bGuardar" title="Guardar sesión">💾<span class="lbl">Guardar</span></button>
     <button class="ic" id="bComparar" title="Comparar dos vídeos">⧉<span class="lbl">Comparar</span></button>
+    <button class="ic" id="bResumen" title="Resumen clínico: parámetros espacio-temporales, fases y semáforo">📊<span class="lbl">Resumen</span></button>
     <button class="ic" id="bExportar" title="Exportar">⤓<span class="lbl">Exportar</span></button>
     <button class="ic" id="bAyuda" title="Ayuda">?</button>
   </header>
@@ -211,6 +226,22 @@ label.chk input{width:20px;height:20px}
         <label class="chk"><input type="checkbox" id="chkGrid"> Rejilla</label>
         <label class="chk"><input type="checkbox" id="chkPose" checked> Esqueleto IA</label>
       </div>
+    </div>
+    <div class="sec">
+      <h3>Eventos de la zancada</h3>
+      <div class="evbtns">
+        <button data-ev="IC:D" title="Contacto inicial derecho en este fotograma">⬇ Contacto Dcho</button>
+        <button data-ev="IC:I" title="Contacto inicial izquierdo en este fotograma">⬇ Contacto Izdo</button>
+        <button data-ev="TO:D" title="Despegue derecho en este fotograma">⬆ Despegue Dcho</button>
+        <button data-ev="TO:I" title="Despegue izquierdo en este fotograma">⬆ Despegue Izdo</button>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <button id="evPrev" title="Ir al evento anterior">⏮ Evento</button>
+        <button id="evNext" title="Ir al evento siguiente">Evento ⏭</button>
+        <button id="evAuto" title="Detectar contactos y despegues con la IA (vista sagital)">🤖 Auto</button>
+        <button id="evClear" class="danger" title="Borrar todos los eventos">🗑</button>
+      </div>
+      <div class="muted" id="evInfo" style="margin-top:4px"></div>
     </div>
     <div class="sec" id="selSec" style="display:none">
       <h3>Seleccionado</h3>
@@ -337,6 +368,9 @@ label.chk input{width:20px;height:20px}
   <h2>Ajustes del vídeo</h2>
   <div class="field"><span>Fotogramas por segundo (para avanzar de uno en uno)</span>
     <select id="pnFps"><option>24</option><option>25</option><option>30</option><option>50</option><option>60</option><option>100</option><option>120</option><option>240</option></select></div>
+  <div class="field"><span>Fps reales de la grabación (para calcular tiempos: cadencia, contacto…)</span>
+    <select id="pnFpsReal"><option value="">Igual que el vídeo (velocidad normal)</option><option>60</option><option>120</option><option>240</option><option>480</option><option>960</option></select></div>
+  <p class="muted">Cámbialo solo si el vídeo se reproduce a cámara lenta (por ejemplo, grabado a 240 fps pero guardado a 30 fps): pon los fps con los que se grabó.</p>
   <p class="muted" id="pnInfo"></p>
   <label class="chk" style="margin-bottom:8px"><input type="checkbox" id="pnMirror"> Ver en espejo (solo visual)</label>
   <div class="acts"><button id="pnQuitar" class="danger">Quitar vídeo</button><button id="pnClose" class="prim">Hecho</button></div>
@@ -364,11 +398,36 @@ label.chk input{width:20px;height:20px}
     <li>Retropié: ángulo entre bisección de pierna y de calcáneo, eversión (valgo) o inversión (varo). FPPA: valgo o varo dinámico de rodilla.</li>
     <li>Son medidas 2D: el error crece si la cámara no está perpendicular o el segmento rota fuera del plano.</li>
   </ul>
+  <h4>Eventos y resumen</h4>
+  <ul>
+    <li>Marca el <b>contacto inicial</b> y el <b>despegue</b> de cada pie con los botones de «Eventos de la zancada», o pulsa <b>🤖 Auto</b> tras analizar con la IA en vista sagital (método de Zeni: pie más adelantado / más atrasado respecto a la pelvis). Revisa siempre los eventos automáticos.</li>
+    <li><b>📊 Resumen</b> calcula cadencia, tiempo de contacto, vuelo, oscilación, duty factor y la asimetría, y los ángulos en contacto, apoyo medio y despegue de cada pierna, con semáforo según tus rangos.</li>
+    <li>Si el vídeo es cámara lenta que se reproduce despacio, indica en ⚙︎ los fps reales de grabación para que los tiempos sean correctos.</li>
+  </ul>
   <h4>4 · Comparar</h4>
   <ul><li>⧉ Comparar abre dos vídeos. Coloca cada uno en el mismo instante (por ejemplo el contacto inicial) y pulsa 🔗 para avanzarlos juntos.</li></ul>
   <h4>5 · Privacidad</h4>
   <ul><li>Los vídeos nunca salen del dispositivo. Las sesiones guardadas van cifradas (AES-256) con una contraseña que no se puede recuperar: apúntala. Haz copias con 📁 → ⤓ Copia.</li></ul>
   <div class="acts"><button id="helpClose" class="prim">Entendido</button></div>
+</div></div>
+
+<div class="modal" id="mRes"><div class="card wide">
+  <h2>📊 Resumen clínico</h2>
+  <div class="row" style="margin-bottom:8px">
+    <div class="seg" id="resVid" style="display:none"><button data-v="0">Vídeo 1</button><button data-v="1">Vídeo 2</button></div>
+    <span class="muted" id="resFuente"></span>
+  </div>
+  <div id="resBody"></div>
+  <p class="muted"><span class="dot v"></span> dentro del rango · <span class="dot a"></span> límite · <span class="dot r"></span> fuera. Valores orientativos y editables: dependen de la velocidad, el calzado y de que la medición es 2D. La asimetría es |D−I| / media × 100.</p>
+  <div class="acts"><button id="resRangos">⚙︎ Rangos de referencia</button><button id="resCopy">📎 Copiar</button><button id="resCsv">⤓ CSV</button><button id="resClose" class="prim">Cerrar</button></div>
+</div></div>
+
+<div class="modal" id="mRangos"><div class="card wide">
+  <h2>Rangos de referencia</h2>
+  <p class="muted">Pon tus propios criterios. Verde = dentro de lo esperado; ámbar = zona límite (más amplia que la verde); fuera del ámbar = rojo. Los valores por defecto son orientativos, tomados de la literatura de carrera y marcha en 2D; revísalos con la bibliografía que uses.</p>
+  <div class="row" style="margin-bottom:8px"><div class="seg" id="rgAct"><button data-v="carrera">Carrera</button><button data-v="marcha">Marcha</button></div></div>
+  <div class="tblwrap"><table class="tbl" id="rgTabla"></table></div>
+  <div class="acts"><button id="rgReset" class="danger">Restaurar por defecto</button><button id="rgClose" class="prim">Guardar y cerrar</button></div>
 </div></div>
 
 <div id="toast"></div>
