@@ -229,9 +229,9 @@ const POSE_METRICS = {
   posterior: [['fppa', 'Rodilla frontal (FPPA, + valgo)'], ['aduccion', 'Aducción de cadera'], ['pelvis', 'Oblicuidad pélvica (+ baja izq.)']],
   frontal: [['fppa', 'Valgo dinámico (FPPA, + valgo)'], ['pelvis', 'Oblicuidad pélvica (+ baja izq.)'], ['progresion', 'Progresión del pie']],
 };
-function poseMeasures(lm, view, side, dir) {
+function poseMeasures(lm, view, side, dir, distFn) {
   if (!lm) return [];
-  if (view === 'sagital') return sagCompute(TEMPLATES.sagital.fromPose(lm, side), side, { dir });
+  if (view === 'sagital') return sagCompute(TEMPLATES.sagital.fromPose(lm, side), side, { dir, distFn });
   const P = {
     eips_i: lmAny(lm, 23), eips_d: lmAny(lm, 24), eias_i: lmAny(lm, 23), eias_d: lmAny(lm, 24),
     cad: lmPt(lm, LM.cadera, side), rod: lmPt(lm, LM.rodilla, side), tob: lmPt(lm, LM.tobillo, side), dedo: lmPt(lm, LM.dedo, side),
@@ -281,6 +281,7 @@ class Pane {
     this.anns = []; this.undo = [];
     this.fps = 30; this.view = { s: 1, ox: 0, oy: 0 }; this.userZoom = false;
     this.mirror = false; this.pose = null; this.A = null; this.B = null;
+    this.events = []; this.fpsReal = null;   // eventos de la zancada; fps reales si es cámara lenta
     this.ready = false; this.file = null; this.videoName = ''; this.pending = null;
     this.draft = null; this.action = null; this.pointers = new Map();
     this.build();
@@ -396,13 +397,14 @@ class Pane {
   }
   updateTag() {
     this.tag.style.display = this.ready ? '' : 'none';
-    this.tag.textContent = `${this.videoName} · ${this.fps} fps${this.mirror ? ' · espejo' : ''}`;
+    this.tag.textContent = `${this.videoName} · ${this.fps} fps${this.fpsReal ? ` (grabado a ${this.fpsReal})` : ''}${this.mirror ? ' · espejo' : ''}`;
     $('.pend', this.el).textContent = this.pending ? `Sesión abierta: carga «${this.pending.name}» para ver sus mediciones` : '';
   }
 
   /* ---------- tiempo / fotogramas ---------- */
   get vw() { return this.video.videoWidth || 1; }
   get vh() { return this.video.videoHeight || 1; }
+  get fpsT() { return this.fpsReal || this.fps; }   // fps para convertir fotogramas en tiempo real
   nFrames() { return Math.max(1, Math.floor((this.video.duration || 0) * this.fps + 1e-6)); }
   frameOf(t) { return Math.floor(t * this.fps + 1e-6); }
   frame() { return this.frameOf(this.video.currentTime); }
@@ -451,12 +453,13 @@ class Pane {
     if (!this.ready) { this.flabel.textContent = '—'; this.marks.innerHTML = ''; return; }
     this.range.value = n;
     this.flabel.textContent = `F ${n} · ${fmtT(this.video.currentTime)}`;
-    const key = this.anns.map(a => a.fixed ? '' : this.frameOf(a.t)).join(',') + `|${this.A}|${this.B}|${this.nFrames()}`;
+    const key = this.anns.map(a => a.fixed ? '' : this.frameOf(a.t)).join(',') + `|${this.A}|${this.B}|${this.nFrames()}|` + this.events.map(e => e.type + e.side + this.frameOf(e.t)).join(',');
     if (key === this._mk) return;
     this._mk = key;
     const N = Math.max(1, this.nFrames() - 1), pct = f => (f / N * 100) + '%';
     let h = '';
     new Set(this.anns.filter(a => !a.fixed).map(a => this.frameOf(a.t))).forEach(f => { h += `<i style="left:${pct(f)}"></i>`; });
+    for (const e of this.events) h += `<i style="left:${pct(this.frameOf(e.t))};top:${e.type === 'IC' ? 18 : 24}px;height:${e.type === 'IC' ? 12 : 7}px;width:2px;background:${e.side === 'D' ? '#FF8A65' : '#4FC3F7'}"></i>`;
     if (this.A !== null) h += `<i class="ab" style="left:${pct(this.A)}"></i>`;
     if (this.B !== null) h += `<i class="ab" style="left:${pct(this.B)}"></i>`;
     if (this.A !== null && this.B !== null) h += `<div class="rng" style="left:${pct(Math.min(this.A, this.B))};width:${Math.abs(this.B - this.A) / N * 100}%"></div>`;
@@ -708,12 +711,12 @@ class Pane {
     }
     return {
       videoName: this.videoName || this.pending?.name || '', videoDur: this.video.duration || this.pending?.dur || 0,
-      fps: this.fps, anns: this.anns, A: this.A, B: this.B, mirror: this.mirror, pose,
+      fps: this.fps, fpsReal: this.fpsReal, anns: this.anns, events: this.events, A: this.A, B: this.B, mirror: this.mirror, pose,
     };
   }
   restore(d) {
     this.anns = d.anns || []; this.undo = []; this.A = d.A ?? null; this.B = d.B ?? null;
-    this.mirror = !!d.mirror; this.pose = d.pose || null;
+    this.mirror = !!d.mirror; this.pose = d.pose || null; this.events = d.events || []; this.fpsReal = d.fpsReal || null;
     if (d.fps) this.fps = d.fps;
     const mismo = this.ready && this.videoName === d.videoName;
     this.pending = mismo ? null : { name: d.videoName, dur: d.videoDur, fps: d.fps };
@@ -1045,6 +1048,7 @@ function actualizarLado() {
   $('#calibInfo').textContent = k ? `Calibrado: ${fmt(k, 2)} px/cm (válido en el plano del objeto)` : 'Sin calibrar (distancias en px). Usa 📏 Calibrar.';
 }
 function actualizarLista() {
+  actualizarEventos();
   const p = activePane(), box = $('#mlist');
   if (!p) { box.innerHTML = ''; return; }
   const n = p.ready ? p.frame() : -1;
@@ -1058,7 +1062,7 @@ function actualizarLista() {
     const sel = S.sel && S.sel.id === a.id;
     return `<div class="it${sel ? ' sel' : ''}" data-id="${a.id}" style="${vis ? '' : 'opacity:.6'}">
       <b>${esc(nombreAnn(a))}</b> <span class="meta">${esc(meta)}</span>
-      ${ms.map(m => `<div><span class="meta">${esc(m.n)}:</span> <span class="v">${esc(m.txt)}</span></div>`).join('')}
+      ${ms.map(m => `<div><span class="meta">${esc(m.n)}:</span> <span class="v">${esc(m.txt)}</span>${puntoRango(rangoDeMedida(m, a))}</div>`).join('')}
     </div>`;
   }).join('');
   $$('.it', box).forEach(el => el.onclick = async () => {
@@ -1183,7 +1187,7 @@ async function cargarVideoEn(pane, file) {
   if (pane.anns.length && !pane.pending) {
     const ok = await confirmar('Cambiar vídeo', 'Este vídeo tiene mediciones. Si cargas otro se borrarán (guarda antes la sesión si las quieres).', 'Cargar y borrar');
     if (!ok) return;
-    pane.anns = []; pane.undo = []; pane.pose = null; pane.A = pane.B = null; S.sel = null;
+    pane.anns = []; pane.undo = []; pane.pose = null; pane.events = []; pane.A = pane.B = null; S.sel = null;
   }
   try {
     toast('Abriendo vídeo…', 6000);
@@ -1226,6 +1230,8 @@ function abrirAjustesPane(pane) {
   const m = $('#mPane');
   $('#pnFps').value = String(pane.fps);
   $('#pnMirror').checked = pane.mirror;
+  $('#pnFpsReal').value = pane.fpsReal ? String(pane.fpsReal) : '';
+  $('#pnFpsReal').onchange = () => { pane.fpsReal = +$('#pnFpsReal').value || null; pane.updateTag(); marcarCambios(); };
   $('#pnInfo').textContent = pane.ready ? `${pane.videoName} · ${pane.vw}×${pane.vh} px · ${fmt(pane.video.duration, 2)} s · ${pane.nFrames()} fotogramas` : 'Sin vídeo';
   m.classList.add('show');
   $('#pnFps').onchange = () => { const t = pane.video.currentTime; pane.fps = +$('#pnFps').value; pane.range.max = pane.nFrames() - 1; pane.video.currentTime = pane.timeOf(pane.frameOf(t)); pane._mk = null; pane.updateTag(); pane.updateTL(); marcarCambios(); };
@@ -1234,7 +1240,7 @@ function abrirAjustesPane(pane) {
   $('#pnQuitar').onclick = async () => {
     m.classList.remove('show');
     if (await confirmar('Quitar vídeo', 'Se quita el vídeo y sus mediciones de esta pantalla (no se borra nada guardado).', 'Quitar')) {
-      pane.anns = []; pane.undo = []; pane.pose = null; pane.A = pane.B = null; pane.pending = null; S.sel = null;
+      pane.anns = []; pane.undo = []; pane.pose = null; pane.events = []; pane.A = pane.B = null; pane.pending = null; S.sel = null;
       pane.unload(); refrescar();
     }
   };
@@ -1253,7 +1259,7 @@ function seriesPose(pane, metric) {
   if (!pane.pose) return out;
   const frames = Object.keys(pane.pose.frames).map(Number).sort((a, b) => a - b);
   for (const side of ['D', 'I']) for (const n of frames) {
-    const m = poseMeasures(pane.pose.frames[n], pane.pose.view, side, pane.pose.dir).find(x => x.k === metric);
+    const m = poseMeasures(pane.pose.frames[n], pane.pose.view, side, pane.pose.dir, px => pane.dist(px)).find(x => x.k === metric);
     if (m) out[side].push([n, m.v]);
   }
   if ($('#gSmooth').checked) for (const s of ['D', 'I']) {
@@ -1307,6 +1313,15 @@ function dibujarGrafica() {
     let prevN = null;
     a.forEach(([n, v]) => { if (prevN === null || n - prevN > 3 * (p.pose.step || 1)) ctx.moveTo(X(n), Y(v)); else ctx.lineTo(X(n), Y(v)); prevN = n; });
     ctx.stroke();
+  }
+  // eventos de la zancada: ▼ contacto arriba, ▲ despegue abajo
+  for (const e of p.events) {
+    const f = p.frameOf(e.t); if (f < n0 || f > n1) continue;
+    const x = X(f), z = 5 * d; ctx.fillStyle = col[e.side];
+    ctx.beginPath();
+    if (e.type === 'IC') { ctx.moveTo(x - z, Tp); ctx.lineTo(x + z, Tp); ctx.lineTo(x, Tp + z * 1.6); }
+    else { ctx.moveTo(x - z, Tp + H); ctx.lineTo(x + z, Tp + H); ctx.lineTo(x, Tp + H - z * 1.6); }
+    ctx.fill();
   }
   // cursor
   const n = p.frame();
@@ -1428,6 +1443,419 @@ async function correrIA() {
   await p.seekFrame(a); p.updateTL();
   $('#gMetric').innerHTML = ''; prepararGrafica(); mostrarGrafica(true); refrescar();
   toast('Análisis listo. Toca la gráfica para ir a un fotograma; «➜ Plantilla» lo convierte en medición editable.', 5000);
+}
+
+/* ============================================================
+   EVENTOS DE LA ZANCADA · ESPACIO-TEMPORALES · FASES · RANGOS
+   Eventos guardados como {type:'IC'|'TO', side:'D'|'I', t, auto?}.
+   ============================================================ */
+const EV_N = { IC: 'Contacto', TO: 'Despegue' };
+const ladoN = s => s === 'D' ? 'Dcho' : 'Izdo';
+const framesEv = (p, side, type) => p.events.filter(e => e.side === side && e.type === type).map(e => p.frameOf(e.t)).sort((a, b) => a - b);
+
+function toggleEvento(type, side) {
+  const p = activePane(); if (!p?.ready) { toast('Primero abre un vídeo'); return; }
+  const n = p.frame();
+  const i = p.events.findIndex(e => e.type === type && e.side === side && p.frameOf(e.t) === n);
+  if (i >= 0) { p.events.splice(i, 1); toast(`${EV_N[type]} ${ladoN(side)} quitado de F ${n}`); }
+  else { p.events.push({ type, side, t: p.timeOf(n) }); toast(`${EV_N[type]} ${ladoN(side)} en F ${n}`); }
+  p._mk = null; marcarCambios(); p.updateTL(); actualizarEventos(); if (grafVisible()) dibujarGrafica();
+}
+function actualizarEventos() {
+  const p = activePane(), info = $('#evInfo'); if (!p || !info) return;
+  const c = (s, t) => p.events.filter(e => e.side === s && e.type === t).length;
+  const n = p.ready ? p.frame() : -1;
+  const aqui = p.events.filter(e => p.frameOf(e.t) === n);
+  $$('[data-ev]').forEach(b => { const [t, sd] = b.dataset.ev.split(':'); b.classList.toggle('on', aqui.some(e => e.type === t && e.side === sd)); });
+  info.textContent = p.events.length
+    ? `Dcho: ${c('D', 'IC')} contactos · ${c('D', 'TO')} despegues — Izdo: ${c('I', 'IC')} · ${c('I', 'TO')}` +
+      (aqui.length ? ` — aquí: ${aqui.map(e => `${EV_N[e.type]} ${ladoN(e.side)}${e.auto ? ' (auto)' : ''}`).join(', ')}` : '')
+    : 'Sin eventos. Márcalos en su fotograma o usa 🤖 Auto tras analizar con IA en vista sagital.';
+}
+function irEvento(dir) {
+  const p = activePane(); if (!p?.ready || !p.events.length) return;
+  const n = p.frame();
+  const fs = [...new Set(p.events.map(e => p.frameOf(e.t)))].sort((a, b) => a - b);
+  const f = dir > 0 ? fs.find(x => x > n) : [...fs].reverse().find(x => x < n);
+  if (f === undefined) { toast(dir > 0 ? 'No hay más eventos' : 'No hay eventos anteriores'); return; }
+  p.pausar(); p.video.currentTime = p.timeOf(f); p.updateTL(f);
+  if (S.link !== null) seguirVinculado(p);
+}
+
+/* Detección automática (Zeni et al., 2008): contacto inicial = talón en su punto más
+   adelantado respecto a la pelvis; despegue = dedos en su punto más atrasado.
+   Funciona en cinta y en suelo porque es relativo a la pelvis. Necesita vista sagital. */
+function suavizar(a, h) {
+  if (!h) return a.slice();
+  return a.map((_, i) => { let sm = 0, c = 0; for (let j = i - h; j <= i + h; j++) if (j >= 0 && j < a.length && isFinite(a[j])) { sm += a[j]; c++; } return c ? sm / c : NaN; });
+}
+function picos(a, W, signo) {
+  const v = a.map(x => x * signo), fin = v.filter(isFinite);
+  if (fin.length < 5) return [];
+  const rango = Math.max(...fin) - Math.min(...fin), res = [];
+  for (let i = 0; i < v.length; i++) {
+    if (!isFinite(v[i]) || i < W / 2 || i > v.length - 1 - W / 2) continue;   // bordes del tramo: dudosos
+    let esMax = true, lo = Infinity;
+    for (let j = i - W; j <= i + W; j++) {
+      if (j < 0 || j >= v.length || j === i || !isFinite(v[j])) continue;
+      if (v[j] > v[i] || (v[j] === v[i] && j < i)) { esMax = false; break; }
+      lo = Math.min(lo, v[j]);
+    }
+    if (esMax && v[i] - lo >= 0.25 * rango) res.push(i);
+  }
+  return res;
+}
+function detectarEventos(p) {
+  const pose = p.pose;
+  if (!pose) return { error: 'Primero analiza el vídeo con 🤖 IA en vista sagital (lateral).' };
+  if (pose.view !== 'sagital') return { error: 'La detección automática necesita la vista sagital (lateral). En vista frontal o posterior marca los eventos a mano con los botones.' };
+  const ns = Object.keys(pose.frames).map(Number).sort((a, b) => a - b);
+  if (ns.length < 12) return { error: 'Hay muy pocos fotogramas analizados. Analiza al menos 2 zancadas.' };
+  const step = pose.step || 1, dir = pose.dir || 1, fr = p.fpsT;
+  const W = Math.max(2, Math.round(0.25 * fr / step));          // ventana de ±0,25 s
+  const h = Math.max(0, Math.round(0.012 * fr / step));         // suavizado ~±12 ms
+  const out = [];
+  for (const side of ['D', 'I']) {
+    const heel = [], toe = [];
+    for (const n of ns) {
+      const lm = pose.frames[n], hL = lmAny(lm, 23), hR = lmAny(lm, 24);
+      const hip = hL && hR ? mid(hL, hR) : (hL || hR);
+      const he = lmPt(lm, LM.talon, side), to = lmPt(lm, LM.dedo, side);
+      heel.push(hip && he ? (he.x - hip.x) * dir : NaN);
+      toe.push(hip && to ? (to.x - hip.x) * dir : NaN);
+    }
+    for (const i of picos(suavizar(heel, h), W, +1)) out.push({ type: 'IC', side, t: p.timeOf(ns[i]), auto: true });
+    for (const i of picos(suavizar(toe, h), W, -1)) out.push({ type: 'TO', side, t: p.timeOf(ns[i]), auto: true });
+  }
+  return { events: out };
+}
+async function autoEventos() {
+  const p = activePane(); if (!p?.ready) { toast('Primero abre un vídeo'); return; }
+  const r = detectarEventos(p);
+  if (r.error) { preguntar('Detección automática', r.error, '', { input: false, ok: 'Entendido' }); return; }
+  if (!r.events.length) { toast('No se encontraron zancadas claras en el tramo analizado', 4000); return; }
+  if (p.events.length && !(await confirmar('Sustituir eventos', `Se han detectado ${r.events.length} eventos. ¿Sustituyen a los ${p.events.length} actuales?`, 'Sustituir'))) return;
+  p.events = r.events; p._mk = null; marcarCambios(); p.updateTL(); actualizarEventos(); if (grafVisible()) dibujarGrafica();
+  toast(`${r.events.length} eventos detectados. Revísalos con ⏮ ⏭ y corrige los que no cuadren.`, 5000);
+}
+
+/* ---------- parámetros espacio-temporales ---------- */
+const estad = arr => {
+  const a = arr.filter(isFinite); if (!a.length) return null;
+  const m = a.reduce((x, y) => x + y, 0) / a.length;
+  const sd = a.length > 1 ? Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / (a.length - 1)) : 0;
+  return { m, sd, n: a.length };
+};
+function espacioTemporal(p) {
+  const fr = p.fpsT, ms = f => f / fr * 1000, res = {}, pasos = [];
+  for (const s of ['D', 'I']) {
+    const o = s === 'D' ? 'I' : 'D';
+    const ic = framesEv(p, s, 'IC'), to = framesEv(p, s, 'TO'), icO = framesEv(p, o, 'IC'), toO = framesEv(p, o, 'TO');
+    const gct = [], zan = [], osc = [], duty = [], paso = [], vuelo = [], doble = [];
+    ic.forEach((f, i) => {
+      const sig = ic[i + 1], lim = sig ?? f + 2.5 * fr;
+      const t = to.find(x => x > f && x < lim);
+      if (t !== undefined) gct.push(ms(t - f));
+      if (sig !== undefined && sig - f < 2.5 * fr) { zan.push(ms(sig - f)); if (t !== undefined) { osc.push(ms(sig - t)); duty.push((t - f) / (sig - f) * 100); } }
+      const prevO = [...icO].reverse().find(x => x < f);
+      if (prevO !== undefined && f - prevO < 1.5 * fr) paso.push(ms(f - prevO));
+      const prevTO = [...toO].reverse().find(x => x < f);
+      if (prevTO !== undefined && (prevO === undefined || prevTO > prevO) && f - prevTO < fr) vuelo.push(ms(f - prevTO));
+      const nextTO = toO.find(x => x > f);
+      if (nextTO !== undefined && (t === undefined || nextTO < t) && nextTO - f < fr) doble.push(ms(nextTO - f));
+    });
+    res[s] = { gct: estad(gct), zan: estad(zan), osc: estad(osc), duty: estad(duty), paso: estad(paso), vuelo: estad(vuelo), doble: estad(doble) };
+    pasos.push(...paso);
+  }
+  const P = estad(pasos);
+  let cad = P ? 60000 / P.m : null;
+  if (!cad) { const z = [res.D.zan, res.I.zan].filter(Boolean); if (z.length) cad = 120000 / (z.reduce((a, b) => a + b.m, 0) / z.length); }
+  return { res, cadencia: cad, fr };
+}
+
+/* ---------- ángulos por fases (IA + eventos) ---------- */
+const ETQ = {
+  tronco: 'Tronco (° · + adelante)', cadera: 'Cadera (° · + flexión)', rodilla: 'Rodilla (° · + flexión)', tobillo: 'Tobillo (° · + dorsiflexión)',
+  tibia: 'Tibia (° · + rodilla delante del tobillo)', pie: 'Pie-suelo (° · + talón primero)', overstride: 'Talón delante de la cadera',
+  fppa: 'Rodilla frontal FPPA (° · + valgo)', caida: 'Caída pélvica contralateral (°)', aduccion: 'Aducción de cadera (°)', retropie: 'Retropié (° · + eversión)',
+  calcvert: 'Calcáneo-vertical (° · + eversión)', pierna: 'Pierna-vertical (° · + valgo)', progresion: 'Progresión del pie (° · + abducción)',
+};
+const FASE_N = { IC: 'Contacto inicial', MS: 'Apoyo medio', TO: 'Despegue', pico: 'Picos durante el apoyo', osc: 'Oscilación', '*': 'Cualquier momento' };
+function faseCodigo(f) {
+  if (!f) return null;
+  if (f.startsWith('Contacto')) return 'IC';
+  if (f.startsWith('Apoyo medio')) return 'MS';
+  if (f === 'Despegue' || f === 'Preoscilación') return 'TO';
+  return null;
+}
+// Pelvis: se expresa como caída del lado contralateral al apoyo (+ = cae el lado libre).
+function claveYValor(k, v, side) { return k === 'pelvis' ? { k: 'caida', v: side === 'D' ? v : -v } : { k, v }; }
+
+function fasesPose(p) {
+  const pose = p.pose, view = pose.view, distFn = px => p.dist(px);
+  const ns = Object.keys(pose.frames).map(Number).sort((a, b) => a - b);
+  const valor = (n, side, k) => {
+    const lm = poseEn(p, n); if (!lm) return NaN;
+    const want = k === 'caida' ? 'pelvis' : k;
+    const m = poseMeasures(lm, view, side, pose.dir, distFn).find(x => x.k === want);
+    return m ? claveYValor(m.k, m.v, side).v : NaN;
+  };
+  const unidad = k => k === 'overstride' ? (p.pxPerCm ? 'cm' : 'px') : '°';
+  const sag = view === 'sagital', carrera = S.act === 'carrera';
+  const FILAS = sag ? [
+    ['IC', 'tronco'], ['IC', 'cadera'], ['IC', 'rodilla'], ['IC', 'tobillo'], ['IC', 'tibia'], ['IC', 'pie'], ['IC', 'overstride'],
+    ['MS', 'cadera'], ['MS', 'rodilla'], ['MS', 'tobillo'],
+    ['TO', 'cadera'], ['TO', 'rodilla'], ['TO', 'tobillo'],
+    ['pico', 'rodilla', 'max', 'Flexión máx. de rodilla'], ['pico', 'tobillo', 'max', 'Dorsiflexión máx. de tobillo'], ['pico', 'cadera', 'min', 'Extensión máx. de cadera (mín. del ángulo)'],
+    ['osc', 'rodilla', 'max', 'Flexión máx. de rodilla en oscilación'],
+  ] : [
+    ['IC', 'fppa'], ['IC', 'caida'], ['MS', 'fppa'], ['MS', 'caida'], ['TO', 'fppa'],
+    ['pico', 'fppa', 'max', 'Valgo máx. de rodilla (FPPA)'], ['pico', 'caida', 'max', 'Caída pélvica contralateral máx.'],
+    ...(view === 'posterior' ? [['pico', 'aduccion', 'max', 'Aducción máx. de cadera']] : []),
+  ];
+  const acum = {}; FILAS.forEach((_, i) => { acum[i] = { D: [], I: [] }; });
+  let ciclos = 0;
+  for (const side of ['D', 'I']) {
+    const ic = framesEv(p, side, 'IC'), to = framesEv(p, side, 'TO');
+    ic.forEach((f, i) => {
+      const sig = ic[i + 1], t = to.find(x => x > f && (sig === undefined || x < sig));
+      if (t === undefined || t - f > 2 * p.fpsT) return;
+      ciclos++;
+      const enApoyo = ns.filter(n => n >= f && n <= t);
+      const enOsc = sig !== undefined ? ns.filter(n => n > t && n < sig) : [];
+      // Apoyo medio: en carrera sagital, el fotograma de máxima flexión de rodilla; si no, la mitad del apoyo.
+      let msF = Math.round((f + t) / 2);
+      if (sag && carrera && enApoyo.length) msF = enApoyo.reduce((b, n) => (valor(n, side, 'rodilla') > valor(b, side, 'rodilla') ? n : b), enApoyo[0]);
+      FILAS.forEach(([fase, k, modo], idx) => {
+        let v = NaN;
+        if (fase === 'IC') v = valor(f, side, k);
+        else if (fase === 'TO') v = valor(t, side, k);
+        else if (fase === 'MS') v = valor(msF, side, k);
+        else {
+          const vals = (fase === 'osc' ? enOsc : enApoyo).map(n => valor(n, side, k)).filter(isFinite);
+          if (vals.length) v = modo === 'min' ? Math.min(...vals) : Math.max(...vals);
+        }
+        acum[idx][side].push(v);
+      });
+    });
+  }
+  const filas = FILAS.map(([fase, k, , n], i) => ({ fase, k, n: n || ETQ[k] || k, u: unidad(k), D: estad(acum[i].D), I: estad(acum[i].I) }))
+    .filter(f => f.D || f.I);
+  return { filas, ciclos, view };
+}
+// Mediciones manuales (plantillas) agrupadas por fase y lado.
+function fasesManual(p) {
+  const grupos = new Map();
+  for (const a of p.anns) {
+    if (a.fixed || a.type !== 'tpl') continue;
+    const fase = a.fase && a.fase !== '—' ? a.fase : 'Sin fase';
+    for (const m of medir(a, p)) {
+      const kv = claveYValor(m.k, m.v, a.side);
+      const id = fase + '|' + kv.k;
+      if (!grupos.has(id)) grupos.set(id, { faseTxt: fase, fase: faseCodigo(fase), k: kv.k, n: ETQ[kv.k] || m.n, u: m.u, D: [], I: [], act: a.act });
+      grupos.get(id)[a.side === 'I' ? 'I' : 'D'].push(kv.v);
+    }
+  }
+  return [...grupos.values()].map(g => ({ ...g, D: estad(g.D), I: estad(g.I) }));
+}
+
+/* ---------- rangos de referencia (semáforo) ---------- */
+const RANGOS_DEF = [
+  { id: 'c-cad', act: 'carrera', k: 'cadencia', f: '*', n: 'Cadencia', u: 'ppm', v: [170, 200], a: [160, 210] },
+  { id: 'c-asim', act: 'carrera', k: 'asim', f: '*', n: 'Asimetría temporal', u: '%', v: [0, 5], a: [0, 10] },
+  { id: 'c-tronco', act: 'carrera', k: 'tronco', f: '*', n: 'Inclinación del tronco', u: '°', v: [3, 15], a: [0, 20] },
+  { id: 'c-tibia-ic', act: 'carrera', k: 'tibia', f: 'IC', n: 'Inclinación de la tibia', u: '°', v: [-6, 4], a: [-10, 8] },
+  { id: 'c-over-ic', act: 'carrera', k: 'overstride', f: 'IC', n: 'Talón delante de la cadera', u: 'cm', v: [-5, 12], a: [-10, 20] },
+  { id: 'c-rod-ic', act: 'carrera', k: 'rodilla', f: 'IC', n: 'Flexión de rodilla', u: '°', v: [10, 25], a: [5, 30] },
+  { id: 'c-rod-ms', act: 'carrera', k: 'rodilla', f: 'MS', n: 'Flexión de rodilla', u: '°', v: [38, 50], a: [32, 55] },
+  { id: 'c-rod-pico', act: 'carrera', k: 'rodilla', f: 'pico', n: 'Flexión máx. de rodilla en apoyo', u: '°', v: [38, 50], a: [32, 55] },
+  { id: 'c-fppa', act: 'carrera', k: 'fppa', f: '*', n: 'Valgo dinámico (FPPA)', u: '°', v: [-5, 8], a: [-8, 12] },
+  { id: 'c-caida', act: 'carrera', k: 'caida', f: '*', n: 'Caída pélvica contralateral', u: '°', v: [-2, 5], a: [-4, 8] },
+  { id: 'c-add', act: 'carrera', k: 'aduccion', f: '*', n: 'Aducción de cadera', u: '°', v: [-5, 10], a: [-8, 14] },
+  { id: 'c-retro', act: 'carrera', k: 'retropie', f: '*', n: 'Retropié (+ eversión)', u: '°', v: [-2, 10], a: [-5, 15] },
+  { id: 'm-cad', act: 'marcha', k: 'cadencia', f: '*', n: 'Cadencia', u: 'ppm', v: [100, 125], a: [90, 135] },
+  { id: 'm-asim', act: 'marcha', k: 'asim', f: '*', n: 'Asimetría temporal', u: '%', v: [0, 5], a: [0, 10] },
+  { id: 'm-tronco', act: 'marcha', k: 'tronco', f: '*', n: 'Inclinación del tronco', u: '°', v: [-3, 6], a: [-6, 10] },
+  { id: 'm-rod-ic', act: 'marcha', k: 'rodilla', f: 'IC', n: 'Flexión de rodilla', u: '°', v: [-2, 8], a: [-5, 12] },
+  { id: 'm-rod-ms', act: 'marcha', k: 'rodilla', f: 'MS', n: 'Flexión de rodilla', u: '°', v: [0, 15], a: [-5, 20] },
+  { id: 'm-tob-pico', act: 'marcha', k: 'tobillo', f: 'pico', n: 'Dorsiflexión máx. en apoyo', u: '°', v: [5, 15], a: [2, 20] },
+  { id: 'm-fppa', act: 'marcha', k: 'fppa', f: '*', n: 'Valgo dinámico (FPPA)', u: '°', v: [-5, 6], a: [-8, 10] },
+  { id: 'm-caida', act: 'marcha', k: 'caida', f: '*', n: 'Caída pélvica contralateral', u: '°', v: [-2, 4], a: [-4, 7] },
+  { id: 'm-retro', act: 'marcha', k: 'retropie', f: '*', n: 'Retropié (+ eversión)', u: '°', v: [-2, 8], a: [-5, 12] },
+];
+const KEY_RANGOS = 'videopd_rangos_v1';
+function cargarRangos() {
+  let mod = {};
+  try { mod = JSON.parse(localStorage.getItem(KEY_RANGOS) || '{}'); } catch (_) {}
+  return RANGOS_DEF.map(r => ({ ...r, ...(mod[r.id] || {}) }));
+}
+function guardarRangos(lista) {
+  const mod = {};
+  lista.forEach(r => { const d = RANGOS_DEF.find(x => x.id === r.id); if (JSON.stringify([r.v, r.a, !!r.off]) !== JSON.stringify([d.v, d.a, !!d.off])) mod[r.id] = { v: r.v, a: r.a, off: !!r.off }; });
+  try { localStorage.setItem(KEY_RANGOS, JSON.stringify(mod)); } catch (_) {}
+}
+function evaluarRango(k, fase, act, v, u) {
+  if (!isFinite(v)) return null;
+  const rs = cargarRangos().filter(r => !r.off && r.act === (act || S.act) && r.k === k && r.u === u && (r.f === fase || r.f === '*'));
+  const r = rs.find(x => x.f === fase) || rs.find(x => x.f === '*');
+  if (!r) return null;
+  if (v >= r.v[0] && v <= r.v[1]) return 'v';
+  if (v >= r.a[0] && v <= r.a[1]) return 'a';
+  return 'r';
+}
+const puntoRango = c => c ? `<span class="dot ${c}" title="${{ v: 'Dentro del rango', a: 'Zona límite', r: 'Fuera del rango' }[c]}"></span>` : '';
+function rangoDeMedida(m, a) {
+  if (!m.k || a.fixed) return null;
+  const kv = claveYValor(m.k, m.v, a.side);
+  return evaluarRango(kv.k, faseCodigo(a.fase), a.act, kv.v, m.u);
+}
+
+/* ---------- ventana de resumen ---------- */
+let resPane = 0;
+function abrirResumen() {
+  resPane = S.dual ? S.active : 0;
+  $('#resVid').style.display = S.dual ? '' : 'none';
+  pintarResumen();
+  $('#mRes').classList.add('show');
+}
+function construirResumen(p) {
+  const filas = [], act = S.act;
+  const st = (x, d = 0) => x ? `${fmt(x.m, d)}${x.n > 1 ? ` ± ${fmt(x.sd, d)}` : ''} <span class="muted">(${x.n})</span>` : '—';
+  const csvSt = x => x ? [fmt(x.m, 1), x.n > 1 ? fmt(x.sd, 1) : '', x.n] : ['', '', ''];
+  let html = '';
+  // 1) espacio-temporales
+  const hayEv = p.events.some(e => e.type === 'IC');
+  if (hayEv) {
+    const et = espacioTemporal(p);
+    const asim = (a, b) => a && b ? Math.abs(a.m - b.m) / ((Math.abs(a.m) + Math.abs(b.m)) / 2 || 1) * 100 : null;
+    const ROWS = [
+      ['gct', 'Tiempo de contacto (ms)'], ['vuelo', 'Tiempo de vuelo antes del contacto (ms)'], ['doble', 'Doble apoyo tras el contacto (ms)'],
+      ['osc', 'Tiempo de oscilación (ms)'], ['paso', 'Tiempo de paso (ms)'], ['zan', 'Tiempo de zancada (ms)'], ['duty', 'Duty factor · % del ciclo en apoyo (%)'],
+    ];
+    html += `<h4>Parámetros espacio-temporales <span class="muted" style="font-weight:400">· tiempos con ${et.fr} fps reales</span></h4><div class="tblwrap"><table class="tbl"><tr><th>Parámetro</th><th>Dcho</th><th>Izdo</th><th>Asimetría</th></tr>`;
+    if (et.cadencia) {
+      const c = evaluarRango('cadencia', '*', act, et.cadencia, 'ppm');
+      html += `<tr><td>Cadencia (pasos/min)</td><td colspan="2" style="text-align:center">${fmt(et.cadencia, 0)}${puntoRango(c)}</td><td></td></tr>`;
+      filas.push({ sec: 'Espacio-temporal', p: 'Cadencia (pasos/min)', D: [fmt(et.cadencia, 1), '', ''], I: ['', '', ''], dif: '', cD: c || '', cI: '' });
+    }
+    for (const [k, n] of ROWS) {
+      const D = et.res.D[k], I = et.res.I[k]; if (!D && !I) continue;
+      const as = asim(D, I), c = as !== null ? evaluarRango('asim', '*', act, as, '%') : null;
+      const d = k === 'duty' ? 1 : 0;
+      html += `<tr><td>${n}</td><td>${st(D, d)}</td><td>${st(I, d)}</td><td>${as !== null ? fmt(as, 1) + ' %' + puntoRango(c) : '—'}</td></tr>`;
+      filas.push({ sec: 'Espacio-temporal', p: n, D: csvSt(D), I: csvSt(I), dif: as !== null ? fmt(as, 1) + ' %' : '', cD: c || '', cI: '' });
+    }
+    html += '</table></div>';
+  }
+  // 2) fases con la IA
+  if (p.pose && hayEv) {
+    const fp = fasesPose(p);
+    if (fp.filas.length) {
+      html += `<h4>Ángulos por fases · IA (${fp.view}) <span class="muted" style="font-weight:400">· ${fp.ciclos} apoyos analizados · media ± DE (n)</span></h4><div class="tblwrap"><table class="tbl"><tr><th>Parámetro</th><th>Dcho</th><th>Izdo</th><th>Dif. D−I</th></tr>`;
+      let grp = '';
+      for (const f of fp.filas) {
+        if (f.fase !== grp) { grp = f.fase; html += `<tr class="grp"><td colspan="4">${FASE_N[grp]}${grp === 'MS' && fp.view === 'sagital' && S.act === 'carrera' ? ' (máx. flexión de rodilla)' : grp === 'MS' ? ' (mitad del apoyo)' : ''}</td></tr>`; }
+        const d = f.u === 'px' ? 0 : 1;
+        const cD = f.D ? evaluarRango(f.k, f.fase, act, f.D.m, f.u) : null, cI = f.I ? evaluarRango(f.k, f.fase, act, f.I.m, f.u) : null;
+        const dif = f.D && f.I ? fmt(f.D.m - f.I.m, d) : '—';
+        html += `<tr><td>${esc(f.n)}${f.u !== '°' ? ` (${f.u})` : ''}</td><td>${st(f.D, d)}${puntoRango(cD)}</td><td>${st(f.I, d)}${puntoRango(cI)}</td><td>${dif}</td></tr>`;
+        filas.push({ sec: 'IA · ' + FASE_N[f.fase], p: f.n + (f.u !== '°' ? ` (${f.u})` : ''), D: csvSt(f.D), I: csvSt(f.I), dif: dif === '—' ? '' : dif, cD: cD || '', cI: cI || '' });
+      }
+      html += '</table></div>';
+    }
+  }
+  // 3) mediciones manuales por fase
+  const man = fasesManual(p);
+  if (man.length) {
+    html += `<h4>Mediciones manuales (plantillas) por fase</h4><div class="tblwrap"><table class="tbl"><tr><th>Parámetro</th><th>Dcho</th><th>Izdo</th><th>Dif. D−I</th></tr>`;
+    let grp = '';
+    man.sort((a, b) => a.faseTxt.localeCompare(b.faseTxt));
+    for (const f of man) {
+      if (f.faseTxt !== grp) { grp = f.faseTxt; html += `<tr class="grp"><td colspan="4">${esc(grp)}</td></tr>`; }
+      const d = f.u === 'px' ? 0 : 1;
+      const cD = f.D ? evaluarRango(f.k, f.fase, f.act || act, f.D.m, f.u) : null, cI = f.I ? evaluarRango(f.k, f.fase, f.act || act, f.I.m, f.u) : null;
+      const dif = f.D && f.I ? fmt(f.D.m - f.I.m, d) : '—';
+      html += `<tr><td>${esc(f.n)}${f.u !== '°' ? ` (${f.u})` : ''}</td><td>${st(f.D, d)}${puntoRango(cD)}</td><td>${st(f.I, d)}${puntoRango(cI)}</td><td>${dif}</td></tr>`;
+      filas.push({ sec: 'Manual · ' + f.faseTxt, p: f.n + (f.u !== '°' ? ` (${f.u})` : ''), D: csvSt(f.D), I: csvSt(f.I), dif: dif === '—' ? '' : dif, cD: cD || '', cI: cI || '' });
+    }
+    html += '</table></div>';
+  }
+  if (!html) html = `<p>Todavía no hay datos para resumir.</p><ul>
+    <li><b>Tiempos y cadencia:</b> marca contactos y despegues en «Eventos de la zancada» (o 🤖 Auto tras analizar con IA en vista sagital).</li>
+    <li><b>Ángulos por fases:</b> analiza con 🤖 IA y marca los eventos; o usa las plantillas guiadas indicando la fase.</li></ul>`;
+  else if (!hayEv) html = `<p class="muted">Sin eventos de la zancada: marca contactos y despegues para obtener tiempos, cadencia y ángulos por fases de la IA.</p>` + html;
+  return { html, filas };
+}
+function pintarResumen() {
+  const p = S.panes[resPane];
+  $$('#resVid button').forEach(b => b.classList.toggle('on', +b.dataset.v === resPane));
+  const fuentes = [p.pose ? `IA ${p.pose.view}` : null, p.events.length ? `${p.events.length} eventos` : null, p.anns.some(a => a.type === 'tpl') ? 'plantillas manuales' : null].filter(Boolean);
+  $('#resFuente').textContent = `${p.videoName || p.pending?.name || 'Sin vídeo'} · ${S.act === 'carrera' ? 'Carrera' : 'Marcha'}${fuentes.length ? ' · ' + fuentes.join(' · ') : ''}`;
+  const r = construirResumen(p);
+  $('#resBody').innerHTML = r.html;
+  return r;
+}
+const COLS_RES = [['sec', 'Sección'], ['p', 'Parámetro'], ['dm', 'Dcho media'], ['dsd', 'Dcho DE'], ['dn', 'Dcho n'], ['im', 'Izdo media'], ['isd', 'Izdo DE'], ['in', 'Izdo n'], ['dif', 'Asimetría / Dif. D−I'], ['cD', 'Semáforo Dcho'], ['cI', 'Semáforo Izdo']];
+const SEM_TXT = { v: 'verde', a: 'ámbar', r: 'rojo', '': '' };
+function filasResumenCSV() {
+  const r = construirResumen(S.panes[resPane]);
+  return r.filas.map(f => ({ sec: f.sec, p: f.p, dm: f.D[0], dsd: f.D[1], dn: f.D[2], im: f.I[0], isd: f.I[1], in: f.I[2], dif: f.dif, cD: SEM_TXT[f.cD], cI: SEM_TXT[f.cI] }));
+}
+function pintarRangos(act) {
+  const lista = cargarRangos();
+  $$('#rgAct button').forEach(b => b.classList.toggle('on', b.dataset.v === act));
+  const t = $('#rgTabla');
+  t.dataset.act = act;
+  t.innerHTML = `<tr><th>Activo</th><th>Parámetro</th><th>Momento</th><th>Unidad</th><th>Verde mín</th><th>Verde máx</th><th>Ámbar mín</th><th>Ámbar máx</th></tr>` +
+    lista.filter(r => r.act === act).map(r => `<tr data-id="${r.id}">
+      <td><input type="checkbox" data-c="on" ${r.off ? '' : 'checked'} style="width:20px;height:20px"></td>
+      <td>${esc(r.n)}</td><td style="text-align:left">${FASE_N[r.f]}</td><td>${r.u}</td>
+      <td><input type="text" inputmode="decimal" data-c="v0" value="${fmt(r.v[0], 0)}"></td><td><input type="text" inputmode="decimal" data-c="v1" value="${fmt(r.v[1], 0)}"></td>
+      <td><input type="text" inputmode="decimal" data-c="a0" value="${fmt(r.a[0], 0)}"></td><td><input type="text" inputmode="decimal" data-c="a1" value="${fmt(r.a[1], 0)}"></td></tr>`).join('');
+}
+function leerTablaRangos() {
+  const lista = cargarRangos(), num = el => parseFloat(String(el.value).replace(',', '.'));
+  let error = '';
+  $$('#rgTabla tr[data-id]').forEach(tr => {
+    const r = lista.find(x => x.id === tr.dataset.id);
+    const g = c => $(`[data-c="${c}"]`, tr);
+    const v = [num(g('v0')), num(g('v1'))], a = [num(g('a0')), num(g('a1'))];
+    if (![...v, ...a].every(isFinite) || v[0] > v[1] || a[0] > a[1]) { error = `Revisa los valores de «${r.n}»`; return; }
+    r.v = v; r.a = [Math.min(a[0], v[0]), Math.max(a[1], v[1])]; r.off = !g('on').checked;
+  });
+  if (error) { toast(error, 4000); return false; }
+  guardarRangos(lista); return true;
+}
+function construirResumenUI() {
+  $('#bResumen').onclick = abrirResumen;
+  $('#resClose').onclick = () => $('#mRes').classList.remove('show');
+  $$('#resVid button').forEach(b => b.onclick = () => { resPane = +b.dataset.v; pintarResumen(); });
+  $('#resCsv').onclick = async () => {
+    const f = filasResumenCSV(); if (!f.length) { toast('No hay datos'); return; }
+    const cab = `${S.session ? `Paciente;${S.session.nhc || ''} ${S.session.nombre || ''}\r\n` : ''}Fecha;${hoy()}\r\nVídeo;${S.panes[resPane].videoName}\r\nActividad;${S.act}\r\n\r\n`;
+    await entregar(new Blob(['﻿' + cab + csv(f, COLS_RES)], { type: 'text/csv;charset=utf-8' }), `${baseNombre()}_resumen.csv`);
+  };
+  $('#resCopy').onclick = async () => {
+    const f = filasResumenCSV(); if (!f.length) { toast('No hay datos'); return; }
+    try { await navigator.clipboard.writeText(csv(f, COLS_RES, '\t')); toast('Resumen copiado: pégalo en Excel o en el informe'); }
+    catch (_) { toast('El navegador no deja copiar; usa ⤓ CSV'); }
+  };
+  $('#resRangos').onclick = () => { pintarRangos(S.act); $('#mRangos').classList.add('show'); };
+  $$('#rgAct button').forEach(b => b.onclick = () => { if (leerTablaRangos()) pintarRangos(b.dataset.v); });
+  $('#rgClose').onclick = () => { if (!leerTablaRangos()) return; $('#mRangos').classList.remove('show'); if ($('#mRes').classList.contains('show')) pintarResumen(); actualizarLista(); };
+  $('#rgReset').onclick = async () => {
+    if (!(await confirmar('Restaurar rangos', 'Se pierden tus rangos personalizados y vuelven los orientativos por defecto.', 'Restaurar'))) return;
+    try { localStorage.removeItem(KEY_RANGOS); } catch (_) {}
+    pintarRangos($('#rgTabla').dataset.act || S.act); actualizarLista();
+  };
+  // eventos
+  $$('[data-ev]').forEach(b => b.onclick = () => { const [t, sd] = b.dataset.ev.split(':'); toggleEvento(t, sd); });
+  $('#evPrev').onclick = () => irEvento(-1); $('#evNext').onclick = () => irEvento(1);
+  $('#evAuto').onclick = autoEventos;
+  $('#evClear').onclick = async () => {
+    const p = activePane(); if (!p?.events.length) return;
+    if (await confirmar('Borrar eventos', `Se borran los ${p.events.length} eventos de la zancada de este vídeo.`, 'Borrar')) { p.events = []; p._mk = null; marcarCambios(); p.updateTL(); actualizarEventos(); if (grafVisible()) dibujarGrafica(); }
+  };
 }
 
 /* ============================================================
@@ -1611,7 +2039,7 @@ function cargarSesion(s) {
   S.act = s.act || 'carrera'; rellenarFases();
   modoDual(s.panes.length === 2);
   s.panes.forEach((d, i) => S.panes[i].restore(d));
-  if (s.panes.length === 1) { const p2 = S.panes[1]; p2.anns = []; p2.pose = null; p2.pending = null; }
+  if (s.panes.length === 1) { const p2 = S.panes[1]; p2.anns = []; p2.pose = null; p2.events = []; p2.pending = null; }
   S.sel = null; S.dirty = false; actualizarCabecera();
   $('#gMetric').innerHTML = ''; mostrarGrafica(false);
   refrescar();
@@ -1620,7 +2048,7 @@ function cargarSesion(s) {
 }
 async function nuevaSesion() {
   if (S.dirty && !(await confirmar('Nueva sesión', 'Se vacía la pantalla. Lo no guardado se pierde.', 'Vaciar'))) return;
-  S.panes.forEach(p => { p.anns = []; p.undo = []; p.pose = null; p.A = p.B = null; p.pending = null; p.unload(); });
+  S.panes.forEach(p => { p.anns = []; p.undo = []; p.pose = null; p.events = []; p.fpsReal = null; p.A = p.B = null; p.pending = null; p.unload(); });
   S.session = null; S.sel = null; S.dirty = false; modoDual(false); mostrarGrafica(false); actualizarCabecera(); refrescar();
   $('#mSess').classList.remove('show');
 }
@@ -1828,7 +2256,7 @@ function init() {
   S.panes = [new Pane(0), new Pane(1)];
   S.panes.forEach(p => work.appendChild(p.el));
   S.panes[1].el.style.display = 'none';
-  construirLado(); construirTransporte(); construirGrafica();
+  construirLado(); construirTransporte(); construirGrafica(); construirResumenUI();
 
   $('#fileVideo').onchange = e => { const f = e.target.files[0]; e.target.value = ''; cargarVideoEn(S.panes[S.loadTarget ?? S.active], f); };
   $('#fileCam').onchange = e => { const f = e.target.files[0]; e.target.value = ''; cargarVideoEn(S.panes[S.loadTarget ?? S.active], f); };
@@ -1864,7 +2292,7 @@ function init() {
   };
   // Cerrar modales tocando fuera (excepto los que esperan respuesta)
   $$('.modal').forEach(m => m.addEventListener('pointerdown', e => {
-    if (e.target === m && !['mLock', 'mPrompt', 'mIA', 'mVid'].includes(m.id)) m.classList.remove('show');
+    if (e.target === m && !['mLock', 'mPrompt', 'mIA', 'mVid', 'mRangos'].includes(m.id)) m.classList.remove('show');
   }));
   window.addEventListener('beforeunload', e => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
   actualizarCabecera(); refrescar();
@@ -1879,4 +2307,4 @@ function init() {
   }
 }
 init();
-window.__videopd = { S, TEMPLATES, medir, sagCompute, postCompute, frontCompute };
+window.__videopd = { S, TEMPLATES, medir, sagCompute, postCompute, frontCompute, espacioTemporal, detectarEventos, fasesPose, evaluarRango, construirResumen };

@@ -3,7 +3,7 @@
    - Detección automática (MediaPipe, ~20 MB): se guarda la primera vez que se usa.
    Sube CACHE_VERSION cada vez que cambies index.html, app.js o pose.js.
    OJO: comparte origen con la Ficha PD, así que SOLO borra cachés con prefijo 'videopd-'. */
-const CACHE_VERSION = 'videopd-v1.0.2';
+const CACHE_VERSION = 'videopd-v1.1.0';
 const CACHE_IA = 'videopd-ia-0.10.14';   // no cambia al actualizar la app: no se vuelve a bajar
 
 const NUCLEO = [
